@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -376,4 +377,384 @@
         };
     </script>
 </body>
+=======
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="manifest" href="manifest.json">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hatimi Hardware - Jali Organizer</title>
+    <style>
+        :root {
+            --navy: #0A192F;
+            --gold: #D4AF37;
+            --white: #FFFFFF;
+            --light-gray: #F4F7F6;
+            --text-main: #333333;
+            --success: #155724;
+            --success-bg: #d4edda;
+            --success-border: #c3e6cb;
+            --error: #721c24;
+            --error-bg: #f8d7da;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--light-gray);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            background-color: var(--navy);
+            color: var(--white);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border-bottom: 5px solid var(--gold);
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .header h1 { margin: 0; font-size: 26px; letter-spacing: 1px; text-transform: uppercase;}
+        
+        .alert-btn {
+            background-color: var(--gold);
+            color: var(--navy);
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+            font-size: 14px;
+            transition: 0.3s;
+        }
+        .alert-btn:hover { background-color: #e6c245; }
+
+        .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .panel { background: var(--white); padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-top: 3px solid var(--navy); }
+        .panel h3 { color: var(--navy); border-bottom: 2px solid var(--light-gray); padding-bottom: 10px; margin-top: 0; }
+        .smart-cutter { grid-column: 1 / -1; border: 2px solid var(--gold); }
+        .input-group { display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end; margin: 15px 0; }
+        .input-box { display: flex; flex-direction: column; }
+        .input-box label { font-weight: bold; margin-bottom: 5px; font-size: 14px; color: var(--navy); }
+        select, input { padding: 10px; font-size: 15px; border: 1px solid #ccc; border-radius: 6px; width: 160px; }
+        .btn-large { background-color: var(--navy); color: var(--gold); font-size: 16px; font-weight: bold; padding: 11px 25px; border: none; border-radius: 6px; cursor: pointer; transition: 0.3s; }
+        .btn-large:hover { background-color: #112A4F; color: var(--white); }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #eee; }
+        th { color: #888; font-weight: bold; font-size: 13px; text-transform: uppercase; background: #fdfdfd;}
+        .stock-controls { display: flex; align-items: center; gap: 8px; }
+        .btn-circle { background: var(--light-gray); border: 1px solid #ccc; color: var(--navy); border-radius: 50%; width: 28px; height: 28px; font-weight: bold; cursor: pointer; }
+        .btn-circle:hover { background: var(--gold); color: var(--navy); border-color: var(--gold); }
+        .offcut-tag { background: #fff8e1; color: #b08d00; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 14px; border: 1px solid #ffe57f; }
+        
+        #toast { visibility: hidden; min-width: 300px; background-color: var(--success-bg); color: var(--success); border: 1px solid var(--success-border); text-align: left; border-radius: 8px; padding: 16px 20px; position: fixed; z-index: 1000; right: 30px; top: 30px; font-size: 15px; box-shadow: 0 6px 15px rgba(0,0,0,0.15); opacity: 0; transition: opacity 0.4s, top 0.4s; line-height: 1.5; }
+        #toast.show { visibility: visible; opacity: 1; top: 50px; }
+        #toast.error { background-color: var(--error-bg); color: var(--error); border-color: #f5c6cb; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Hatimi Hardware - Jali Organizer</h1>
+        <p style="margin:5px 0 0 0; color:#ddd;">Smart Cutting, Inventory & Live Cloud Sync</p>
+        <button id="alertBtn" class="alert-btn">🔔 Turn On Manager Alerts for this Device</button>
+    </div>
+
+    <div id="toast"></div>
+
+    <div class="panel smart-cutter">
+        <h3>Smart Customer Cut</h3>
+        <div class="input-group">
+            <div class="input-box">
+                <label>Customer Name:</label>
+                <input type="text" id="custName" placeholder="Enter Name" style="width: 200px;">
+            </div>
+            <div class="input-box">
+                <label>Width Needed:</label>
+                <select id="reqWidth">
+                    <option value="2">2 ft</option>
+                    <option value="2.5">2.5 ft</option>
+                    <option value="3">3 ft</option>
+                    <option value="3.5">3.5 ft</option>
+                    <option value="4">4 ft</option>
+                    <option value="5">5 ft</option>
+                </select>
+            </div>
+            <div class="input-box">
+                <label>Length Needed (ft):</label>
+                <input type="number" id="reqLength" placeholder="e.g. 3.5" step="0.5">
+            </div>
+            <div class="input-box">
+                <button class="btn-large" onclick="processSmartCut()">Process Cut</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid-layout">
+        <div class="panel">
+            <h3>Full Straight Sheets (12ft)</h3>
+            <table>
+                <thead>
+                    <tr><th>Width</th><th>Qty in Stock</th><th>Adjust</th></tr>
+                </thead>
+                <tbody id="fullStockTable"></tbody>
+            </table>
+        </div>
+
+        <div class="panel">
+            <h3>Offcut Bin (Leftovers)</h3>
+            <table>
+                <thead>
+                    <tr><th>Piece ID</th><th>Width</th><th>Remaining Length</th></tr>
+                </thead>
+                <tbody id="offcutTable"></tbody>
+            </table>
+        </div>
+
+        <div class="panel" style="grid-column: 1 / -1;">
+            <h3>Daily Cut & Sales Log</h3>
+            <table>
+                <thead>
+                    <tr><th>Date & Time</th><th>Customer</th><th>Size Cut</th><th>Source Piece</th><th>Leftover Saved</th></tr>
+                </thead>
+                <tbody id="logTable"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- FIREBASE CLOUD MODULE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
+
+     // 1. YOUR FIREBASE CONFIG
+        const firebaseConfig = {
+          apiKey: "AIzaSyBitqayX2VPBNpV3wpDKyZEnJxE7dgWEWE",
+          authDomain: "hatimi-jali-app.firebaseapp.com",
+          projectId: "hatimi-jali-app",
+          storageBucket: "hatimi-jali-app.firebasestorage.app",
+          messagingSenderId: "631367054682",
+          appId: "1:631367054682:web:884fa53b80f7b21b542f63",
+          measurementId: "G-W8KXHXRN1D"
+        };
+
+        // Initialize Firebase Server
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const messaging = getMessaging(app);
+        const inventoryRef = doc(db, "hatimi_data", "jali_inventory");
+
+        let fullStock = { "2": 0, "2.5": 0, "3": 0, "3.5": 0, "4": 0, "5": 0 };
+        let offcuts = [];
+        let cutLogs = [];
+
+        // 2. LIVE CLOUD SYNC: Listens for database changes instantly
+        onSnapshot(inventoryRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                fullStock = data.fullStock || fullStock;
+                offcuts = data.offcuts || [];
+                cutLogs = data.cutLogs || [];
+                renderUI();
+            } else {
+                // If database is empty, create the initial structure
+                saveToServer();
+            }
+        });
+
+        // 3. PUSH NOTIFICATION SETUP
+        document.getElementById('alertBtn').addEventListener('click', async () => {
+            try {
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    const token = await getToken(messaging, { vapidKey: 'BAJxYexggENRFCqLe2N_jpCsksaGjM9_CeoCpiMxo89ujilAajZUqMrnug8lmTzJ8LK44gaVvqyBdjS7rNbr_B4' }); // Replace with your VAPID key
+                    
+                    // Save manager's phone token to cloud
+                    await setDoc(doc(db, "hatimi_data", "manager_device"), { token: token });
+                    alert("Success! Hatimi Manager Alerts are now active on this device.");
+                } else {
+                    alert("Please allow notifications in your browser permissions.");
+                }
+            } catch (error) {
+                console.error("Error setting up alerts:", error);
+            }
+        });
+
+        // 4. SAVE TO CLOUD FUNCTION
+        async function saveToServer() {
+            offcuts = offcuts.filter(item => parseFloat(item.length) > 0);
+            await setDoc(inventoryRef, {
+                fullStock: fullStock,
+                offcuts: offcuts,
+                cutLogs: cutLogs
+            });
+        }
+
+        // 5. RENDER UI FUNCTION
+        function renderUI() {
+            const stockBody = document.getElementById('fullStockTable');
+            stockBody.innerHTML = '';
+            for (const [width, qty] of Object.entries(fullStock)) {
+                stockBody.innerHTML += `
+                    <tr>
+                        <td><strong>${width} ft</strong></td>
+                        <td>${qty} Pieces</td>
+                        <td>
+                            <div class="stock-controls">
+                                <button class="btn-circle" onclick="window.adjustStock('${width}', -1)">-</button>
+                                <button class="btn-circle" onclick="window.adjustStock('${width}', 1)">+</button>
+                            </div>
+                        </td>
+                    </tr>`;
+            }
+
+            const offcutBody = document.getElementById('offcutTable');
+            offcutBody.innerHTML = '';
+            let sortedOffcuts = [...offcuts].sort((a, b) => a.width - b.width || a.length - b.length);
+            if(sortedOffcuts.length === 0) {
+                offcutBody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#999;">No offcuts available.</td></tr>';
+            } else {
+                sortedOffcuts.forEach(item => {
+                    offcutBody.innerHTML += `
+                        <tr>
+                            <td><span style="color:var(--navy); font-weight:bold;">${item.id}</span></td>
+                            <td>${item.width} ft</td>
+                            <td><span class="offcut-tag">${item.length} ft</span></td>
+                        </tr>`;
+                });
+            }
+
+            const logBody = document.getElementById('logTable');
+            logBody.innerHTML = '';
+            let reversedLogs = [...cutLogs].reverse().slice(0, 15); 
+            if(reversedLogs.length === 0) {
+                logBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#999;">No cuts logged yet.</td></tr>';
+            } else {
+                reversedLogs.forEach(log => {
+                    logBody.innerHTML += `
+                        <tr>
+                            <td style="font-size:12px; color:#666;">${log.time}</td>
+                            <td><strong>${log.customer || 'Walk-in'}</strong></td>
+                            <td>${log.width}x${log.length} ft</td>
+                            <td>${log.source}</td>
+                            <td>${log.leftover}</td>
+                        </tr>`;
+                });
+            }
+        }
+
+        function generateId() {
+            let maxId = 0;
+            offcuts.forEach(o => {
+                let num = parseInt(o.id.replace('J-', ''));
+                if (num > maxId) maxId = num;
+            });
+            return `J-${(maxId + 1).toString().padStart(3, '0')}`;
+        }
+
+        function showNotification(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.innerHTML = message;
+            if (isError) toast.classList.add('error');
+            else toast.classList.remove('error');
+            
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 6000);
+        }
+
+        // Attach functions to window so HTML buttons can access them inside a module
+        window.adjustStock = async function(width, amount) {
+            if (fullStock[width] + amount >= 0) {
+                fullStock[width] += amount;
+                await saveToServer();
+            }
+        };
+
+        window.processSmartCut = async function() {
+            const customerInput = document.getElementById('custName').value;
+            const customer = customerInput ? customerInput : "Walk-in Customer";
+            const width = document.getElementById('reqWidth').value;
+            const length = parseFloat(document.getElementById('reqLength').value);
+
+            if (isNaN(length) || length <= 0) {
+                showNotification("<strong>Error:</strong> Please enter a valid cut length.", true);
+                return;
+            }
+            if (length > 12) {
+                showNotification("<strong>Error:</strong> Cannot cut more than 12ft.", true);
+                return;
+            }
+
+            let logEntry = {
+                time: new Date().toLocaleString(), customer: customer, width: width, length: length, source: "", leftover: ""
+            };
+
+            let onPageMsg = "";
+            let alertMsg = "";
+
+            let validOffcuts = offcuts.filter(o => o.width === width && o.length >= length);
+            
+            if (validOffcuts.length > 0) {
+                validOffcuts.sort((a, b) => a.length - b.length);
+                let bestPiece = validOffcuts[0];
+                bestPiece.length = parseFloat((bestPiece.length - length).toFixed(1));
+                
+                logEntry.source = `Offcut ${bestPiece.id}`;
+                logEntry.leftover = `${bestPiece.length} ft left in bin`;
+                
+                onPageMsg = `<strong>Sale Logged:</strong> ${customer} bought ${width}x${length}ft.<br>Cut from Offcut <strong>${bestPiece.id}</strong>.`;
+                alertMsg = `Cut from Offcut ${bestPiece.id}. Saved 12ft sheet.`;
+            } 
+            else if (fullStock[width] > 0) {
+                fullStock[width] -= 1;
+                let remainder = parseFloat((12.0 - length).toFixed(1));
+                
+                if (remainder > 0) {
+                    let newId = generateId();
+                    offcuts.push({ id: newId, width: width, length: remainder });
+                    logEntry.source = `New 12ft Piece`;
+                    logEntry.leftover = `Saved ${remainder}ft as ${newId}`;
+                    
+                    onPageMsg = `<strong>Sale Logged:</strong> ${customer} bought ${width}x${length}ft.<br>1 Full 12ft Sheet used. Saved ${remainder}ft as <strong>${newId}</strong>.`;
+                    alertMsg = `Used 1 Full 12ft Sheet. Generated offcut ${newId} (${remainder}ft).`;
+                } else {
+                    logEntry.source = `New 12ft Piece`;
+                    logEntry.leftover = `None (0ft)`;
+                    onPageMsg = `<strong>Sale Logged:</strong> ${customer} bought ${width}x${length}ft.<br>Used exactly 1 Full 12ft Sheet.`;
+                    alertMsg = `Used exactly 1 Full 12ft Sheet.`;
+                }
+            } else {
+                showNotification(`<strong>Out of Stock!</strong> You need a new 12ft sheet of ${width}ft width.`, true);
+                return;
+            }
+
+            cutLogs.push(logEntry);
+            
+            // 1. SAVE TO CLOUD (Triggers UI update automatically via onSnapshot)
+            await saveToServer(); 
+
+            // 2. CLEAR INPUTS
+            document.getElementById('custName').value = '';
+            document.getElementById('reqLength').value = '';
+
+            // 3. SHOW TOAST TO STAFF
+            showNotification(onPageMsg, false);
+
+            // 4. TRIGGER BRANDED PUSH NOTIFICATION 
+            // Note: In production, this requires an API call to FCM to securely target the manager's device token.
+            const serverAlertPayload = {
+                title: "Hatimi Hardware Alert",
+                body: `${customer} bought ${width}x${length}ft. ${alertMsg}`
+            };
+            console.log("Firebase Push Alert Triggered to Manager:", serverAlertPayload);
+            // Example API call logic would go here: fetch('https://fcm.googleapis.com/fcm/send', { ... })
+        };
+    </script>
+</body>
+>>>>>>> 55a17019f1864bdaa235719c3877c440538fd5a9
 </html>
