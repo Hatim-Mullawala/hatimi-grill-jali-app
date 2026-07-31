@@ -62,21 +62,16 @@
         #toast.error { background-color: var(--error-bg); color: var(--error); border-color: #f5c6cb; }
     </style>
 
-    <!-- ONESIGNAL SETUP -->
-    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-    <script>
-      window.OneSignalDeferred = window.OneSignalDeferred || [];
-      OneSignalDeferred.push(async function(OneSignal) {
-        await OneSignal.init({
-          appId: "f3b6b4a5-2fbd-417f-b990-14fa64d6d350", 
-          safari_web_id: "", 
-          notifyButton: {
-            enable: true, 
-          },
-          allowLocalhostAsSecureOrigin: true
-        });
-      });
-    </script>
+   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "f3b6b4a5-2fbd-417f-b990-14fa64d6d350",
+    });
+  });
+</script>
+
 </head>
 <body>
 
