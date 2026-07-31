@@ -61,17 +61,21 @@
         #toast.show { visibility: visible; opacity: 1; top: 50px; }
         #toast.error { background-color: var(--error-bg); color: var(--error); border-color: #f5c6cb; }
     </style>
-
-   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
   window.OneSignalDeferred = window.OneSignalDeferred || [];
   OneSignalDeferred.push(async function(OneSignal) {
     await OneSignal.init({
       appId: "f3b6b4a5-2fbd-417f-b990-14fa64d6d350",
+      notifyButton: {
+        enable: true
+      },
+      serviceWorker: {
+        path: "OneSignalSDKWorker.js"
+      }
     });
   });
 </script>
-
 </head>
 <body>
 
