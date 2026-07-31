@@ -67,9 +67,8 @@
   OneSignalDeferred.push(async function(OneSignal) {
     await OneSignal.init({
       appId: "f3b6b4a5-2fbd-417f-b990-14fa64d6d350",
-      serviceWorker: {
-        path: "/hatimi-grill-jali-app/OneSignalSDKWorker.js"
-      }
+      serviceWorkerParam: { scope: "/hatimi-grill-jali-app/" },
+      serviceWorkerPath: "/hatimi-grill-jali-app/OneSignalSDKWorker.js" 
     });
   });
 </script>
