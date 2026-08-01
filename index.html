@@ -60,7 +60,8 @@
         #toast { visibility: hidden; min-width: 300px; background-color: var(--success-bg); color: var(--success); border: 1px solid var(--success-border); text-align: left; border-radius: 8px; padding: 16px 20px; position: fixed; z-index: 1000; right: 30px; top: 30px; font-size: 15px; box-shadow: 0 6px 15px rgba(0,0,0,0.15); opacity: 0; transition: opacity 0.4s, top 0.4s; line-height: 1.5; }
         #toast.show { visibility: visible; opacity: 1; top: 50px; }
         #toast.error { background-color: var(--error-bg); color: var(--error); border-color: #f5c6cb; }
-  /* --- MOBILE RESPONSIVENESS --- */
+        
+        /* --- MOBILE RESPONSIVENESS --- */
         .panel {
             overflow-x: auto; /* Allows tables to scroll left/right on small screens */
         }
@@ -93,6 +94,7 @@
                 font-size: 14px;
             }
         }
+        
         /* --- DELETE BUTTON --- */
         .btn-delete {
             background-color: #ff4d4d; /* Soft red for warning */
@@ -104,10 +106,10 @@
             font-size: 14px;
             transition: background 0.3s ease;
         }
-
         .btn-delete:hover {
             background-color: #cc0000; /* Darker red on hover */
         }
+        
         /* --- CUSTOM PROFESSIONAL MODAL --- */
         .modal-overlay {
             display: none; /* Hidden by default */
@@ -171,6 +173,7 @@
             transition: 0.3s;
         }
         .btn-confirm-delete:hover { background: #900000; }
+        
         /* --- GODOWN LIVE QUEUE --- */
         .godown-panel {
             border: 3px solid #ff4d4d;
@@ -204,17 +207,6 @@
             color: var(--navy);
             font-size: 20px;
         }
-        .queue-instruction {
-            margin-top: 8px;
-            color: #d32f2f;
-            font-weight: bold;
-            background: #ffebee;
-            padding: 6px 12px;
-            border-radius: 4px;
-            display: inline-block;
-            font-size: 15px;
-            border: 1px solid #ffcdd2;
-        }
         .btn-done {
             background: var(--success);
             color: white;
@@ -240,21 +232,21 @@
                 width: 100%;
             }
         }
-  </style>
-<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-<script>
-  window.OneSignalDeferred = window.OneSignalDeferred || [];
-  OneSignalDeferred.push(async function(OneSignal) {
-    await OneSignal.init({
-      appId: "f3b6b4a5-2fbd-417f-b990-14fa64d6d350",
-      serviceWorkerParam: { scope: "/hatimi-grill-jali-app/" },
-      serviceWorkerPath: "/hatimi-grill-jali-app/OneSignalSDKWorker.js" 
-    });
-  });
-</script>
+    </style>
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        OneSignalDeferred.push(async function(OneSignal) {
+            await OneSignal.init({
+                appId: "f3b6b4a5-2fbd-417f-b990-14fa64d6d350",
+                serviceWorkerParam: { scope: "/hatimi-grill-jali-app/" },
+                serviceWorkerPath: "/hatimi-grill-jali-app/OneSignalSDKWorker.js" 
+            });
+        });
+    </script>
 </head>
 <body>
-<!-- CUSTOM CONFIRM DELETE MODAL -->
+    <!-- CUSTOM CONFIRM DELETE MODAL -->
     <div id="deleteModal" class="modal-overlay">
         <div class="modal-content">
             <h3>Confirm Deletion</h3>
@@ -268,13 +260,33 @@
             </div>
         </div>
     </div>
+    <!-- GODOWN QUEUE DELETE MODAL -->
+    <div id="godownDeleteModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Cancel Requirement</h3>
+            <p>Are you sure you want to delete this size requirement?</p>
+            <p style="font-size: 13px; color: #777; background: #f9f9f9; padding: 10px; border-radius: 6px; border: 1px solid #eee;">
+                <strong>Note:</strong> Stock will NOT be deducted. This just removes it from the godown screen.
+            </p>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="window.closeGodownModal()">Cancel</button>
+                <button class="btn-confirm-delete" onclick="window.confirmGodownDeleteAction()">Yes, Delete</button>
+            </div>
+        </div>
+    </div>
     <div class="header">
         <h1>Hatimi Hardware - Jali Organizer</h1>
         <p style="margin:5px 0 0 0; color:#ddd;">Smart Cutting, Inventory & Live Cloud Sync</p>
     </div>
 
     <div id="toast"></div>
-
+    
+    <!-- GODOWN QUEUE -->
+    <div class="panel godown-panel">
+        <h3>🔴 Live Godown Orders (To Be Cut)</h3>
+        <div id="godownQueue" class="queue-container"></div>
+    </div>
+    
     <div class="panel smart-cutter">
         <h3>Smart Customer Cut</h3>
         <div class="input-group">
@@ -293,13 +305,40 @@
                     <option value="5">5 ft</option>
                 </select>
             </div>
-            <div class="input-box">
-                <label>Length Needed (ft):</label>
-                <input type="number" id="reqLength" placeholder="e.g. 3.5" step="0.5">
+            <!-- LENGTH INPUT (FEET & INCHES SYNC) -->
+            <div class="input-box" style="display: flex; flex-direction: column; min-width: 170px;">
+                <label style="font-weight: 600; font-size: 14px; color: #1a237e; margin-bottom: 5px;">Length Needed:</label>
+                <div style="display: flex; gap: 6px;">
+                    <!-- Feet Input -->
+                    <div style="display: flex; align-items: center; border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden; background: white; width: 50%;">
+                        <input type="number" id="reqLength" placeholder="0.0" step="0.1" style="width: 100%; border: none; padding: 10px 5px; outline: none; text-align: center; font-size: 15px; color: #1a237e; font-weight: bold;">
+                        <span style="background: #f8fafc; padding: 10px 5px; color: #64748b; font-size: 12px; font-weight: 600; border-left: 1px solid #cbd5e1;">ft</span>
+                    </div>
+                    <!-- Inches Input -->
+                    <div style="display: flex; align-items: center; border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden; background: white; width: 50%;">
+                        <input type="number" id="reqLengthInches" placeholder="0" step="1" style="width: 100%; border: none; padding: 10px 5px; outline: none; text-align: center; font-size: 15px; color: #1a237e; font-weight: bold;">
+                        <span style="background: #f8fafc; padding: 10px 5px; color: #64748b; font-size: 12px; font-weight: 600; border-left: 1px solid #cbd5e1;">in</span>
+                    </div>
+                </div>
             </div>
-            <div class="input-box">
-                <button class="btn-large" onclick="processSmartCut()">Process Cut</button>
+            <!-- PROFESSIONAL LIVE CALCULATOR -->
+            <div class="input-box" style="display: flex; flex-direction: column; min-width: 130px;">
+                <label style="font-weight: 600; font-size: 14px; color: #1a237e; margin-bottom: 5px;">Live Area (Sq Ft):</label>
+                <div style="display: flex; align-items: center; justify-content: center; height: 100%; min-height: 40px; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; border-bottom: 3px solid #d4af37; box-sizing: border-box; padding: 0 10px;">
+                    <span id="liveSqFt" style="font-size: 17px; font-weight: bold; color: #1a237e;">0.00</span>
+                </div>
             </div>
+            <div class="input-box" style="flex-direction: row; gap: 10px;">
+                <button class="btn-large" style="background-color: #28a745; color: white; padding: 11px 15px;" onclick="window.addSizeToCart()">➕ Add Size</button>
+                <button class="btn-large" onclick="window.processSmartCut()">🚀 Send to Godown</button>
+            </div>
+        </div>
+        
+        <!-- TEMPORARY CART FOR CURRENT CUSTOMER -->
+        <div id="customerCart" style="margin-top: 15px; display: none; background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+            <h4 style="margin-top: 0; margin-bottom: 10px; color: var(--navy);">Sizes to Send:</h4>
+            <ul id="cartList" style="list-style: none; padding: 0; margin: 0 0 15px 0;"></ul>
+            <button class="btn-large" onclick="window.processSmartCut()">🚀 Send All to Godown</button>
         </div>
     </div>
 
@@ -323,11 +362,7 @@
                 <tbody id="offcutTable"></tbody>
             </table>
         </div>
-<!-- GODOWN QUEUE -->
-    <div class="panel godown-panel">
-        <h3>🔴 Live Godown Orders (To Be Cut)</h3>
-        <div id="godownQueue" class="queue-container"></div>
-    </div>
+
         <div class="panel" style="grid-column: 1 / -1;">
             <h3>Daily Cut & Sales Log</h3>
             <table>
@@ -340,28 +375,29 @@
     </div>
 
     <script type="module">
-        // Firebase Cloud Module (Messaging Removed)
+        // Firebase Cloud Module
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
-          apiKey: "AIzaSyBitqayX2VPBNpV3wpDKyZEnJxE7dgWEWE",
-          authDomain: "hatimi-jali-app.firebaseapp.com",
-          projectId: "hatimi-jali-app",
-          storageBucket: "hatimi-jali-app.firebasestorage.app",
-          messagingSenderId: "631367054682",
-          appId: "1:631367054682:web:884fa53b80f7b21b542f63",
-          measurementId: "G-W8KXHXRN1D"
+            apiKey: "AIzaSyBitqayX2VPBNpV3wpDKyZEnJxE7dgWEWE",
+            authDomain: "hatimi-jali-app.firebaseapp.com",
+            projectId: "hatimi-jali-app",
+            storageBucket: "hatimi-jali-app.firebasestorage.app",
+            messagingSenderId: "631367054682",
+            appId: "1:631367054682:web:884fa53b80f7b21b542f63",
+            measurementId: "G-W8KXHXRN1D"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const inventoryRef = doc(db, "hatimi_data", "jali_inventory");
 
-       let fullStock = { "2": 0, "2.5": 0, "3": 0, "3.5": 0, "4": 0, "5": 0 };
+        let fullStock = { "2": 0, "2.5": 0, "3": 0, "3.5": 0, "4": 0, "5": 0 };
         let offcuts = [];
         let cutLogs = [];
-        let activeQueue = []; // New queue for the godown
+        let activeQueue = []; 
+        let currentCustomerCart = []; // NEW: Temporary holding list for sizes
 
         onSnapshot(inventoryRef, (docSnap) => {
             if (docSnap.exists()) {
@@ -369,7 +405,7 @@
                 fullStock = data.fullStock || fullStock;
                 offcuts = data.offcuts || [];
                 cutLogs = data.cutLogs || [];
-                activeQueue = data.activeQueue || []; // Add this
+                activeQueue = data.activeQueue || []; 
                 renderUI();
             } else {
                 saveToServer();
@@ -382,30 +418,134 @@
                 fullStock: fullStock,
                 offcuts: offcuts,
                 cutLogs: cutLogs,
-                activeQueue: activeQueue // Add this
+                activeQueue: activeQueue 
             });
         }
+// --- SMART CALCULATOR (FEET & INCHES SYNC) ---
+        const inputFt = document.getElementById('reqLength');
+        const inputIn = document.getElementById('reqLengthInches');
+        const inputWidth = document.getElementById('reqWidth');
+        const displaySqFt = document.getElementById('liveSqFt');
 
-        function renderUI() {
-            // Draw Godown Queue
+        window.updateLiveSqFt = function() {
+            const width = parseFloat(inputWidth.value) || 0;
+            const ft = parseFloat(inputFt.value) || 0;
+            displaySqFt.innerText = (width * ft).toFixed(2);
+        };
+
+        // 1. Typing in FEET automatically updates INCHES
+        inputFt.addEventListener('input', function() {
+            if (this.value) {
+                inputIn.value = (parseFloat(this.value) * 12).toFixed(1);
+            } else {
+                inputIn.value = '';
+            }
+            window.updateLiveSqFt();
+        });
+
+        // 2. Typing in INCHES automatically updates FEET
+        inputIn.addEventListener('input', function() {
+            if (this.value) {
+                inputFt.value = (parseFloat(this.value) / 12).toFixed(2);
+            } else {
+                inputFt.value = '';
+            }
+            window.updateLiveSqFt();
+        });
+
+        // 3. Changing WIDTH updates Square Feet
+        inputWidth.addEventListener('input', window.updateLiveSqFt);    
+
+           function renderUI() {
+            // Draw Godown Queue (Grouped by Customer)
             const queueContainer = document.getElementById('godownQueue');
             queueContainer.innerHTML = '';
+            
             if (activeQueue.length === 0) {
                 queueContainer.innerHTML = '<p style="text-align:center; color:#888; font-weight:bold;">No pending orders for godown.</p>';
             } else {
+                // 1. Group the flat queue by Customer Name
+                const groupedOrders = {};
                 activeQueue.forEach(order => {
-                    queueContainer.innerHTML += `
-                        <div class="queue-card">
-                            <div class="queue-details">
-                                <strong>${order.customer || 'Walk-in'}</strong><br>
-                                Size Needed: ${order.width} x ${order.length} ft<br>
-                                <span class="queue-instruction">INSTRUCTION: Cut from ${order.source}</span>
+                    const custName = order.customer || 'Walk-in';
+                    if (!groupedOrders[custName]) {
+                        groupedOrders[custName] = [];
+                    }
+                    groupedOrders[custName].push(order);
+                });
+
+              // 2. Create one Master Card per Customer
+                for (const [customerName, items] of Object.entries(groupedOrders)) {
+                    let cardHTML = `
+                        <div class="queue-card" style="display: block; padding: 0; overflow: hidden; border-left: 6px solid #cc0000; margin-bottom: 20px; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+                            
+                            <!-- Customer Header -->
+                            <div style="background-color: #ffebee; color: #cc0000; padding: 15px 20px; border-bottom: 1px solid #ffcccc;">
+                                <h4 style="margin: 0; font-size: 18px; text-transform: uppercase; letter-spacing: 0.5px;">🛒 Order For: ${customerName}</h4>
                             </div>
-                            <button class="btn-done" onclick="window.markGodownDone('${order.time}')">✔️ Mark Cut</button>
+                            
+                            <!-- Strict Vertical List of items for this customer -->
+                            <div style="padding: 20px; display: flex; flex-direction: column; gap: 20px;">
+                    `;
+
+                    // 3. List every size for this customer inside their box
+                    items.forEach((order, index) => {
+                        const isLast = index === items.length - 1;
+                        const borderStyle = isLast ? '' : 'border-bottom: 1px dashed #ddd; padding-bottom: 20px;';
+                        
+                        // Convert decimal feet back to exact inches for the tape measure
+                        const lengthInches = Math.round(parseFloat(order.reqLength) * 12);
+                        
+                        cardHTML += `
+                                <div style="display: flex; flex-direction: column; gap: 10px; width: 100%; ${borderStyle}">
+                                    
+                                    <!-- Shop Requested Header (NOW IN INCHES) -->
+                                    <div>
+                                        <span style="color:#666; font-size:15px;">Shop Requested: 
+                                            <strong style="font-size: 18px; color: var(--navy);">${order.reqWidth} ft <span style="color: #888; font-weight: normal;">(Width)</span> × <span style="color: #cc0000; font-size: 20px;">${lengthInches} inches</span> <span style="color: #888; font-weight: normal;">(Length)</span></strong>
+                                        </span>
+                                    </div>
+                                    
+                                    <!-- Action Row (Inputs and Buttons) -->
+                                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; background: #f9f9f9; padding: 15px; border-radius: 6px; border: 1px solid #eee;">
+                                        
+                                        <!-- Inputs (NOW ASKS FOR INCHES) -->
+                                        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                            <strong style="font-size: 14px; color: var(--navy);">ACTUAL CUT:</strong>
+                                            <select id="godownWidth_${order.id}" style="width: 100px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 15px;">
+                                                <option value="2" ${order.reqWidth === '2' ? 'selected' : ''}>2 ft</option>
+                                                <option value="2.5" ${order.reqWidth === '2.5' ? 'selected' : ''}>2.5 ft</option>
+                                                <option value="3" ${order.reqWidth === '3' ? 'selected' : ''}>3 ft</option>
+                                                <option value="3.5" ${order.reqWidth === '3.5' ? 'selected' : ''}>3.5 ft</option>
+                                                <option value="4" ${order.reqWidth === '4' ? 'selected' : ''}>4 ft</option>
+                                                <option value="5" ${order.reqWidth === '5' ? 'selected' : ''}>5 ft</option>
+                                            </select>
+                                            <span style="color: #888; font-weight: bold;">x</span>
+                                            
+                                            <!-- Worker types inches here -->
+                                            <input type="number" id="godownLengthInches_${order.id}" value="${lengthInches}" step="1" style="width: 100px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 15px;">
+                                            <span style="color: #888; font-size: 15px; font-weight: bold;">inches</span>
+                                        </div>
+                                        
+                                        <!-- Action Buttons -->
+                                        <div style="display: flex; gap: 10px;">
+                                            <button style="background: var(--success); color: white; border: none; padding: 12px 25px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 15px; transition: 0.3s;" onmouseover="this.style.background='#114a1d'" onmouseout="this.style.background='var(--success)'" onclick="window.processGodownCut('${order.id}')">✂️ Process</button>
+                                            <button style="background: #ff4d4d; color: white; border: none; padding: 12px 18px; border-radius: 4px; cursor: pointer; font-size: 15px; transition: 0.3s;" onmouseover="this.style.background='#cc0000'" onmouseout="this.style.background='#ff4d4d'" onclick="window.deleteGodownOrder('${order.id}')">🗑️</button>
+                                        </div>
+                                    </div>
+                                </div>
+                        `;
+                    });
+
+                    cardHTML += `
+                            </div>
                         </div>
                     `;
-                });
-            }
+                    queueContainer.innerHTML += cardHTML;
+                    }
+                }
+
+            // ... (keep the rest of the renderUI function exactly as it was, starting from const stockBody = document.getElementById('fullStockTable');)
             const stockBody = document.getElementById('fullStockTable');
             stockBody.innerHTML = '';
             for (const [width, qty] of Object.entries(fullStock)) {
@@ -422,18 +562,24 @@
                     </tr>`;
             }
 
-            const offcutBody = document.getElementById('offcutTable');
+           const offcutBody = document.getElementById('offcutTable');
             offcutBody.innerHTML = '';
             let sortedOffcuts = [...offcuts].sort((a, b) => a.width - b.width || a.length - b.length);
             if(sortedOffcuts.length === 0) {
                 offcutBody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#999;">No offcuts available.</td></tr>';
             } else {
                 sortedOffcuts.forEach(item => {
+                    // CALCULATE INCHES FOR THE OFFCUT DISPLAY
+                    const offcutInches = Math.round(parseFloat(item.length) * 12);
+                    
                     offcutBody.innerHTML += `
                         <tr>
                             <td><span style="color:var(--navy); font-weight:bold;">${item.id}</span></td>
                             <td>${item.width} ft</td>
-                            <td><span class="offcut-tag">${item.length} ft</span></td>
+                            <td>
+                                <span class="offcut-tag">${item.length} ft</span>
+                                <span style="color: #64748b; font-size: 13px; font-weight: bold; margin-left: 8px;">(${offcutInches} inches)</span>
+                            </td>
                         </tr>`;
                 });
             }
@@ -442,7 +588,7 @@
             logBody.innerHTML = '';
             let reversedLogs = [...cutLogs].reverse().slice(0, 15); 
             if(reversedLogs.length === 0) {
-                logBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#999;">No cuts logged yet.</td></tr>';
+                logBody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#999;">No cuts logged yet.</td></tr>';
             } else {
                 reversedLogs.forEach(log => {
                     logBody.innerHTML += `
@@ -483,90 +629,125 @@
                 await saveToServer();
             }
         };
-
-        window.processSmartCut = async function() {
-            const customerInput = document.getElementById('custName').value;
-            const customer = customerInput ? customerInput : "Walk-in Customer";
+// --- CART SYSTEM FUNCTIONS ---
+        window.addSizeToCart = function() {
             const width = document.getElementById('reqWidth').value;
             const length = parseFloat(document.getElementById('reqLength').value);
 
             if (isNaN(length) || length <= 0) {
-                showNotification("<strong>Error:</strong> Please enter a valid cut length.", true);
-                return;
-            }
-            if (length > 12) {
-                showNotification("<strong>Error:</strong> Cannot cut more than 12ft.", true);
+                showNotification("<strong>Error:</strong> Please enter a valid length.", true);
                 return;
             }
 
-            let logEntry = {
-                time: new Date().toLocaleString(), customer: customer, width: width, length: length, source: "", leftover: ""
-            };
+            currentCustomerCart.push({ width: width, length: length });
+            document.getElementById('reqLength').value = ''; // Clear length for next entry
+            window.renderCart();
+        };
 
-            let onPageMsg = "";
-            let alertMsg = "";
-            let validOffcuts = offcuts.filter(o => o.width === width && o.length >= length);
+       // --- RENDERS THE SHOP CART WITH GRAND TOTAL ---
+        window.renderCart = function() {
+            const cartDiv = document.getElementById('customerCart');
             
-            if (validOffcuts.length > 0) {
-                validOffcuts.sort((a, b) => a.length - b.length);
-                let bestPiece = validOffcuts[0];
-                bestPiece.length = parseFloat((bestPiece.length - length).toFixed(1));
+            if (currentCustomerCart.length === 0) {
+                cartDiv.style.display = 'none';
+                return;
+            }
+            
+            cartDiv.style.display = 'block';
+            let grandTotalSqFt = 0; // Start at zero
+
+            // Create the header with the Grand Total placeholder
+            let html = `
+                <div style="border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                    <h4 style="margin: 0; color: var(--navy);">🛒 Current List</h4>
+                    <strong style="color: #28a745; font-size: 16px;" id="cartGrandTotal">0.00 Sq Ft Total</strong>
+                </div>
+                <ul style="list-style: none; padding: 0; margin: 0;">
+            `;
+            
+            // Loop through all items, add them to the list, and add up the total
+            currentCustomerCart.forEach((item, index) => {
+                let itemSqFt = parseFloat(item.width) * parseFloat(item.length);
+                grandTotalSqFt += itemSqFt; // Add to grand total
                 
-                logEntry.source = `Offcut ${bestPiece.id}`;
-                logEntry.leftover = `${bestPiece.length} ft left in bin`;
-                
-                onPageMsg = `<strong>Sale Logged:</strong> ${customer} bought ${width}x${length}ft.<br>Cut from Offcut <strong>${bestPiece.id}</strong>.`;
-                alertMsg = `Cut from Offcut ${bestPiece.id}. Saved 12ft sheet.`;
-            } 
-            else if (fullStock[width] > 0) {
-                fullStock[width] -= 1;
-                let remainder = parseFloat((12.0 - length).toFixed(1));
-                
-                if (remainder > 0) {
-                    let newId = generateId();
-                    offcuts.push({ id: newId, width: width, length: remainder });
-                    logEntry.source = `New 12ft Piece`;
-                    logEntry.leftover = `Saved ${remainder}ft as ${newId}`;
-                    
-                    onPageMsg = `<strong>Sale Logged:</strong> ${customer} bought ${width}x${length}ft.<br>1 Full 12ft Sheet used. Saved ${remainder}ft as <strong>${newId}</strong>.`;
-                    alertMsg = `Used 1 Full 12ft Sheet. Generated offcut ${newId} (${remainder}ft).`;
-                } else {
-                    logEntry.source = `New 12ft Piece`;
-                    logEntry.leftover = `None (0ft)`;
-                    onPageMsg = `<strong>Sale Logged:</strong> ${customer} bought ${width}x${length}ft.<br>Used exactly 1 Full 12ft Sheet.`;
-                    alertMsg = `Used exactly 1 Full 12ft Sheet.`;
-                }
-            } else {
-                showNotification(`<strong>Out of Stock!</strong> You need a new 12ft sheet of ${width}ft width.`, true);
+                html += `
+                    <li style="padding: 8px 0; border-bottom: 1px dashed #ddd; display: flex; justify-content: space-between; font-size: 15px;">
+                        <span>${item.width} x ${item.length} ft</span>
+                        <strong style="color: #555;">${itemSqFt.toFixed(2)} Sq Ft</strong>
+                    </li>`;
+            });
+            
+            html += `</ul>`;
+            cartDiv.innerHTML = html;
+            
+            // Inject the final calculated grand total into the header
+            document.getElementById('cartGrandTotal').innerText = `${grandTotalSqFt.toFixed(2)} Sq Ft Total`;
+        };
+        window.removeCartItem = function(index) {
+            currentCustomerCart.splice(index, 1);
+            window.renderCart();
+        };
+      // --- SENDS ORDER TO GODOWN (Handles Single & Multiple Sizes) ---
+        window.processSmartCut = async function() {
+            const lengthInput = document.getElementById('reqLength').value;
+            const length = parseFloat(lengthInput);
+            const width = document.getElementById('reqWidth').value;
+
+            // 1. If there is a size typed in the box, automatically add it to our list first
+            if (!isNaN(length) && length > 0) {
+                currentCustomerCart.push({ width: width, length: length });
+            }
+
+            // 2. Check if we have anything to send at all
+            if (currentCustomerCart.length === 0) {
+                showNotification("<strong>Error:</strong> Please enter a size to send.", true);
                 return;
             }
 
-            cutLogs.push(logEntry);
-            activeQueue.push(logEntry); // Send to Godown screen
-            
-            // 1. SAVE TO CLOUD
+            const customerInput = document.getElementById('custName').value;
+            const customer = customerInput ? customerInput : "Walk-in Customer";
+            let summaryText = "";
+
+            // 3. Loop through everything and add to Godown Queue
+            currentCustomerCart.forEach((item, index) => {
+                let queueEntry = {
+                    id: Date.now().toString() + "-" + index, 
+                    time: new Date().toLocaleString(),
+                    customer: customer,
+                    reqWidth: item.width,
+                    reqLength: item.length
+                };
+                activeQueue.push(queueEntry);
+                summaryText += `${item.width}x${item.length}ft, `;
+            });
+
+            // 4. Save to Firebase
             await saveToServer(); 
-
-            // 2. CLEAR INPUTS
-            document.getElementById('custName').value = '';
-            document.getElementById('reqLength').value = '';
-
-            // 3. SHOW TOAST TO STAFF
-            showNotification(onPageMsg, false);
-
-            // 4. TRIGGER ONESIGNAL PUSH NOTIFICATION
+            
+            // 5. Clean up the screen for the next customer
+            const totalSent = currentCustomerCart.length;
+            currentCustomerCart = []; // Empty the cart
+            document.getElementById('custName').value = ''; // Clear name
+            document.getElementById('reqLength').value = ''; // Clear length
+            window.renderCart(); // Hide the cart box
+            showNotification(`Sent ${totalSent} requirement(s) to Godown screen!`, false);
+            document.getElementById('liveSqFt').innerText = "0.00"; // Reset the live calculator
+            document.getElementById('reqLength').value = ''; // Clear feet length
+            document.getElementById('reqLengthInches').value = ''; // <--- ADD THIS LINE
+            
+            // 6. Trigger OneSignal Notification
             const oneSignalAppId = "f3b6b4a5-2fbd-417f-b990-14fa64d6d350";
-            const oneSignalRestApiKey = atob("eDdvbXFjdDVnanZ3dGtiZGdwY3Zja3ZzdW92ZWNwbnJxNG5jZ3RibGg0N2V5N3ZrcTIzeXluaDJ2NDVyeHdiYnRzZm03aHByejUzcTQ3ZTRxemJ5a2k2bXFlMnk="); // <--- REPLACE THIS
-
+            const oneSignalRestApiKey = atob("eDdvbXFjdDVnanZ3dGtiZGdwY3Zja3ZzdW92ZWNwbnJxNG5jZ3RibGg0N2V5N3ZrcTIzeXluaDJ2NDVyeHdiYnRzZm03aHByejUzcTQ3ZTRxemJ5a2k2bXFlMnk=");
+            
             const notificationPayload = {
                 app_id: oneSignalAppId,
                 included_segments: ["Active Subscriptions"], 
-                headings: { en: "Hatimi Hardware Alert" },
-                contents: { en: `${customer} bought ${width}x${length}ft. ${alertMsg}` }
+                headings: { en: "New Jali Order" },
+                contents: { en: `${customer} needs ${totalSent} size(s): ${summaryText.slice(0, -2)}.` }
             };
 
             try {
-                const response = await fetch("https://onesignal.com/api/v1/notifications", {
+                await fetch("https://onesignal.com/api/v1/notifications", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json; charset=utf-8",
@@ -574,32 +755,23 @@
                     },
                     body: JSON.stringify(notificationPayload)
                 });
-
-                if (response.ok) {
-                    console.log("Push notification sent to Hatimi managers!");
-                } else {
-                    console.error("Failed to send notification", await response.text());
-                }
             } catch (error) {
                 console.error("Error triggering OneSignal:", error);
             }
         };
-      // --- DELETE / UNDO FUNCTION (CUSTOM MODAL) ---
-        let logToDelete = null; // Variable to temporarily hold the ID
+        // --- DELETE / UNDO FUNCTION (CUSTOM MODAL) ---
+        let logToDelete = null; 
 
-        // 1. Triggered when the trash can button in the table is clicked
         window.deleteCut = function(logTime) {
             logToDelete = logTime; 
-            document.getElementById('deleteModal').style.display = 'flex'; // Show the nice modal
+            document.getElementById('deleteModal').style.display = 'flex'; 
         };
 
-        // 2. Triggered if they click "Cancel"
         window.closeModal = function() {
-            document.getElementById('deleteModal').style.display = 'none'; // Hide modal
-            logToDelete = null; // Clear the memory
+            document.getElementById('deleteModal').style.display = 'none'; 
+            logToDelete = null; 
         };
 
-        // 3. Triggered if they click "Yes, Delete"
         window.confirmDeleteAction = async function() {
             if (!logToDelete) return;
 
@@ -611,16 +783,108 @@
                 showNotification("Log entry deleted successfully.", false);
             }
             
-            window.closeModal(); // Hide the modal after deleting
+            window.closeModal(); 
         };
-        // --- GODOWN COMPLETION FUNCTION ---
-        window.markGodownDone = async function(orderTime) {
-            const index = activeQueue.findIndex(o => o.time === orderTime);
+
+       // --- GODOWN CUT PROCESSING ---
+        window.processGodownCut = async function(orderId) {
+            const index = activeQueue.findIndex(o => o.id === orderId);
+            if (index === -1) return;
+            const order = activeQueue[index];
+
+            // 1. Get the worker's input in inches, then convert it back to feet for the database
+            const actualWidth = document.getElementById(`godownWidth_${orderId}`).value;
+            const actualLengthInches = parseFloat(document.getElementById(`godownLengthInches_${orderId}`).value);
+            const actualLengthFeet = parseFloat((actualLengthInches / 12).toFixed(2));
+
+            // BUG FIX: Updated to check 'actualLengthFeet' instead of the old undefined variable
+            if (isNaN(actualLengthFeet) || actualLengthFeet <= 0 || actualLengthFeet > 12) {
+                showNotification("<strong>Error:</strong> Godown entered an invalid cut length.", true);
+                return;
+            }
+
+            let logEntry = {
+                time: new Date().toLocaleString(),
+                customer: order.customer,
+                width: actualWidth,
+                length: actualLengthFeet,
+                source: "",
+                leftover: ""
+            };
+
+            // SMART DEDUCTION LOGIC BASED ON ACTUAL SIZE
+            let validOffcuts = offcuts.filter(o => o.width === actualWidth && o.length >= actualLengthFeet);
+            
+            if (validOffcuts.length > 0) {
+                // System finds the best offcut for the final size
+                validOffcuts.sort((a, b) => a.length - b.length);
+                let bestPiece = validOffcuts[0];
+                bestPiece.length = parseFloat((bestPiece.length - actualLengthFeet).toFixed(1));
+                
+                // Convert the leftover feet back to inches for the Log text
+                let leftoverInches = Math.round(bestPiece.length * 12);
+                
+                logEntry.source = `Offcut ${bestPiece.id}`;
+                logEntry.leftover = `${bestPiece.length} ft (${leftoverInches} in)`;
+            } 
+            else if (fullStock[actualWidth] > 0) {
+                // System breaks a new full sheet
+                fullStock[actualWidth] -= 1;
+                let remainder = parseFloat((12.0 - actualLengthFeet).toFixed(1));
+                
+                if (remainder > 0) {
+                    let newId = generateId();
+                    offcuts.push({ id: newId, width: actualWidth, length: remainder });
+                    
+                    // Convert the remainder feet back to inches for the Log text
+                    let remainderInches = Math.round(remainder * 12);
+                    
+                    logEntry.source = `New 12ft Piece`;
+                    logEntry.leftover = `Saved ${remainder}ft (${remainderInches} in) as ${newId}`;
+                } else {
+                    logEntry.source = `New 12ft Piece`;
+                    logEntry.leftover = `None`;
+                }
+            } else {
+                showNotification(`<strong>Out of Stock!</strong> Cannot cut ${actualWidth}ft. Need a new 12ft sheet.`, true);
+                return;
+            }
+
+            // LOG IT AND REMOVE FROM QUEUE
+            cutLogs.push(logEntry);
+            activeQueue.splice(index, 1);
+            
+            // SAVE TO FIREBASE
+            await saveToServer();
+            showNotification("Cut processed and inventory updated!", false);
+        };
+       // --- GODOWN QUEUE DELETION (CUSTOM MODAL) ---
+        let godownOrderToDelete = null; // Memory for which item to delete
+
+        // 1. Opens the professional modal
+        window.deleteGodownOrder = function(orderId) {
+            godownOrderToDelete = orderId; 
+            document.getElementById('godownDeleteModal').style.display = 'flex'; 
+        };
+
+        // 2. Closes the modal if they click Cancel
+        window.closeGodownModal = function() {
+            document.getElementById('godownDeleteModal').style.display = 'none'; 
+            godownOrderToDelete = null; 
+        };
+
+        // 3. Actually deletes the item if they click "Yes, Delete"
+        window.confirmGodownDeleteAction = async function() {
+            if (!godownOrderToDelete) return;
+
+            const index = activeQueue.findIndex(o => o.id === godownOrderToDelete);
             if (index !== -1) {
                 activeQueue.splice(index, 1);
                 await saveToServer(); 
-                showNotification("Order marked as completed by Godown!", false);
+                showNotification("Requirement deleted from godown queue.", false);
             }
+            
+            window.closeGodownModal(); // Hide the modal after processing
         };
     </script>
 </body>
