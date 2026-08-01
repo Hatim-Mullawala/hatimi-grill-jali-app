@@ -474,45 +474,54 @@
                     groupedOrders[custName].push(order);
                 });
 
-              // 2. Create one Master Card per Customer
+              // 2. Create one Master Card per Customer (MOBILE OPTIMIZED)
                 for (const [customerName, items] of Object.entries(groupedOrders)) {
                     let cardHTML = `
-                        <div class="queue-card" style="display: block; padding: 0; overflow: hidden; border-left: 6px solid #cc0000; margin-bottom: 20px; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+                        <div class="queue-card" style="margin-bottom: 15px; background: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow: hidden; border: 1px solid #e2e8f0;">
                             
-                            <!-- Customer Header -->
-                            <div style="background-color: #ffebee; color: #cc0000; padding: 15px 20px; border-bottom: 1px solid #ffcccc;">
-                                <h4 style="margin: 0; font-size: 18px; text-transform: uppercase; letter-spacing: 0.5px;">🛒 Order For: ${customerName}</h4>
+                            <!-- Customer Header (Clean Navy/Slate) -->
+                            <div style="background-color: #f8fafc; padding: 12px 15px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between;">
+                                <h4 style="margin: 0; font-size: 15px; font-weight: 700; color: var(--navy, #0f172a); text-transform: uppercase; letter-spacing: 0.5px;">
+                                    🛒 ${customerName}
+                                </h4>
+                                <span style="background: #e2e8f0; color: #475569; font-size: 11px; padding: 4px 8px; border-radius: 4px; font-weight: 700;">
+                                    ${items.length} ITEM(S)
+                                </span>
                             </div>
                             
                             <!-- Strict Vertical List of items for this customer -->
-                            <div style="padding: 20px; display: flex; flex-direction: column; gap: 20px;">
+                            <div style="padding: 15px; display: flex; flex-direction: column; gap: 15px;">
                     `;
 
                     // 3. List every size for this customer inside their box
                     items.forEach((order, index) => {
                         const isLast = index === items.length - 1;
-                        const borderStyle = isLast ? '' : 'border-bottom: 1px dashed #ddd; padding-bottom: 20px;';
+                        const borderStyle = isLast ? '' : 'border-bottom: 1px dashed #cbd5e1; padding-bottom: 15px;';
                         
                         // Convert decimal feet back to exact inches for the tape measure
                         const lengthInches = Math.round(parseFloat(order.reqLength) * 12);
                         
                         cardHTML += `
-                                <div style="display: flex; flex-direction: column; gap: 10px; width: 100%; ${borderStyle}">
+                                <div style="display: flex; flex-direction: column; gap: 12px; width: 100%; ${borderStyle}">
                                     
-                                    <!-- Shop Requested Header (NOW IN INCHES) -->
-                                    <div>
-                                        <span style="color:#666; font-size:15px;">Shop Requested: 
-                                            <strong style="font-size: 18px; color: var(--navy);">${order.reqWidth} ft <span style="color: #888; font-weight: normal;">(Width)</span> × <span style="color: #cc0000; font-size: 20px;">${lengthInches} inches</span> <span style="color: #888; font-weight: normal;">(Length)</span></strong>
-                                        </span>
+                                    <!-- Shop Requested Header -->
+                                    <div style="display: flex; flex-direction: column; gap: 2px;">
+                                        <span style="color:#64748b; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Requested Size</span>
+                                        <div style="font-size: 18px; color: var(--navy, #0f172a); font-weight: 700;">
+                                            ${order.reqWidth} <span style="font-size: 14px; color: #94a3b8; font-weight: 500;">ft</span> 
+                                            <span style="color: #cbd5e1; margin: 0 4px; font-weight: normal;">×</span> 
+                                            <span style="color: #ef4444; font-size: 22px;">${lengthInches}</span> <span style="font-size: 14px; color: #94a3b8; font-weight: 500;">inches</span>
+                                        </div>
                                     </div>
                                     
                                     <!-- Action Row (Inputs and Buttons) -->
-                                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; background: #f9f9f9; padding: 15px; border-radius: 6px; border: 1px solid #eee;">
+                                    <div style="background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 10px;">
                                         
-                                        <!-- Inputs (NOW ASKS FOR INCHES) -->
-                                        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                                            <strong style="font-size: 14px; color: var(--navy);">ACTUAL CUT:</strong>
-                                            <select id="godownWidth_${order.id}" style="width: 100px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 15px;">
+                                        <div style="font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px;">CONFIRM ACTUAL CUT:</div>
+                                        
+                                        <!-- Inputs (FLEXBOX FOR MOBILE PERFECT FIT) -->
+                                        <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
+                                            <select id="godownWidth_${order.id}" style="flex: 1; min-width: 0; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 15px; background: white; color: #0f172a; font-weight: 600; outline: none; box-sizing: border-box;">
                                                 <option value="2" ${order.reqWidth === '2' ? 'selected' : ''}>2 ft</option>
                                                 <option value="2.5" ${order.reqWidth === '2.5' ? 'selected' : ''}>2.5 ft</option>
                                                 <option value="3" ${order.reqWidth === '3' ? 'selected' : ''}>3 ft</option>
@@ -520,18 +529,25 @@
                                                 <option value="4" ${order.reqWidth === '4' ? 'selected' : ''}>4 ft</option>
                                                 <option value="5" ${order.reqWidth === '5' ? 'selected' : ''}>5 ft</option>
                                             </select>
-                                            <span style="color: #888; font-weight: bold;">x</span>
                                             
-                                            <!-- Worker types inches here -->
-                                            <input type="number" id="godownLengthInches_${order.id}" value="${lengthInches}" step="1" style="width: 100px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 15px;">
-                                            <span style="color: #888; font-size: 15px; font-weight: bold;">inches</span>
+                                            <span style="color: #94a3b8; font-weight: bold; font-size: 14px;">✕</span>
+                                            
+                                            <div style="flex: 1; min-width: 0; position: relative; display: flex; align-items: center;">
+                                                <input type="number" id="godownLengthInches_${order.id}" value="${lengthInches}" step="1" style="width: 100%; padding: 10px; padding-right: 32px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 16px; font-weight: bold; color: #ef4444; text-align: center; outline: none; box-sizing: border-box; background: white;">
+                                                <span style="position: absolute; right: 10px; color: #94a3b8; font-size: 13px; font-weight: 600;">in</span>
+                                            </div>
                                         </div>
                                         
-                                        <!-- Action Buttons -->
-                                        <div style="display: flex; gap: 10px;">
-                                            <button style="background: var(--success); color: white; border: none; padding: 12px 25px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 15px; transition: 0.3s;" onmouseover="this.style.background='#114a1d'" onmouseout="this.style.background='var(--success)'" onclick="window.processGodownCut('${order.id}')">✂️ Process</button>
-                                            <button style="background: #ff4d4d; color: white; border: none; padding: 12px 18px; border-radius: 4px; cursor: pointer; font-size: 15px; transition: 0.3s;" onmouseover="this.style.background='#cc0000'" onmouseout="this.style.background='#ff4d4d'" onclick="window.deleteGodownOrder('${order.id}')">🗑️</button>
+                                        <!-- Action Buttons (GRID SETUP FOR THUMBS) -->
+                                        <div style="display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 4px;">
+                                            <button style="background: #10b981; color: white; border: none; padding: 12px; border-radius: 4px; font-weight: 700; cursor: pointer; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);" onclick="window.processGodownCut('${order.id}')">
+                                                ✓ Process Cut
+                                            </button>
+                                            <button style="background: white; color: #ef4444; border: 1px solid #fca5a5; padding: 0 16px; border-radius: 4px; cursor: pointer; font-size: 16px;" onclick="window.deleteGodownOrder('${order.id}')">
+                                                🗑️
+                                            </button>
                                         </div>
+                                        
                                     </div>
                                 </div>
                         `;
@@ -542,7 +558,7 @@
                         </div>
                     `;
                     queueContainer.innerHTML += cardHTML;
-                    }
+                }
                 }
 
             // ... (keep the rest of the renderUI function exactly as it was, starting from const stockBody = document.getElementById('fullStockTable');)
