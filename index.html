@@ -171,6 +171,75 @@
             transition: 0.3s;
         }
         .btn-confirm-delete:hover { background: #900000; }
+        /* --- GODOWN LIVE QUEUE --- */
+        .godown-panel {
+            border: 3px solid #ff4d4d;
+            background: #fff0f0;
+            margin-bottom: 20px;
+        }
+        .godown-panel h3 {
+            color: #cc0000;
+            border-bottom: 2px solid #ffcccc;
+        }
+        .queue-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .queue-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 6px solid #ff4d4d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .queue-details {
+            font-size: 16px;
+            line-height: 1.4;
+        }
+        .queue-details strong {
+            color: var(--navy);
+            font-size: 20px;
+        }
+        .queue-instruction {
+            margin-top: 8px;
+            color: #d32f2f;
+            font-weight: bold;
+            background: #ffebee;
+            padding: 6px 12px;
+            border-radius: 4px;
+            display: inline-block;
+            font-size: 15px;
+            border: 1px solid #ffcdd2;
+        }
+        .btn-done {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-done:hover {
+            background: #114a1d;
+        }
+        
+        @media (max-width: 768px) {
+            .queue-card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            .btn-done {
+                width: 100%;
+            }
+        }
   </style>
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
@@ -254,7 +323,11 @@
                 <tbody id="offcutTable"></tbody>
             </table>
         </div>
-
+<!-- GODOWN QUEUE -->
+    <div class="panel godown-panel">
+        <h3>🔴 Live Godown Orders (To Be Cut)</h3>
+        <div id="godownQueue" class="queue-container"></div>
+    </div>
         <div class="panel" style="grid-column: 1 / -1;">
             <h3>Daily Cut & Sales Log</h3>
             <table>
@@ -285,9 +358,10 @@
         const db = getFirestore(app);
         const inventoryRef = doc(db, "hatimi_data", "jali_inventory");
 
-        let fullStock = { "2": 0, "2.5": 0, "3": 0, "3.5": 0, "4": 0, "5": 0 };
+       let fullStock = { "2": 0, "2.5": 0, "3": 0, "3.5": 0, "4": 0, "5": 0 };
         let offcuts = [];
         let cutLogs = [];
+        let activeQueue = []; // New queue for the godown
 
         onSnapshot(inventoryRef, (docSnap) => {
             if (docSnap.exists()) {
@@ -295,6 +369,7 @@
                 fullStock = data.fullStock || fullStock;
                 offcuts = data.offcuts || [];
                 cutLogs = data.cutLogs || [];
+                activeQueue = data.activeQueue || []; // Add this
                 renderUI();
             } else {
                 saveToServer();
@@ -306,11 +381,31 @@
             await setDoc(inventoryRef, {
                 fullStock: fullStock,
                 offcuts: offcuts,
-                cutLogs: cutLogs
+                cutLogs: cutLogs,
+                activeQueue: activeQueue // Add this
             });
         }
 
         function renderUI() {
+            // Draw Godown Queue
+            const queueContainer = document.getElementById('godownQueue');
+            queueContainer.innerHTML = '';
+            if (activeQueue.length === 0) {
+                queueContainer.innerHTML = '<p style="text-align:center; color:#888; font-weight:bold;">No pending orders for godown.</p>';
+            } else {
+                activeQueue.forEach(order => {
+                    queueContainer.innerHTML += `
+                        <div class="queue-card">
+                            <div class="queue-details">
+                                <strong>${order.customer || 'Walk-in'}</strong><br>
+                                Size Needed: ${order.width} x ${order.length} ft<br>
+                                <span class="queue-instruction">INSTRUCTION: Cut from ${order.source}</span>
+                            </div>
+                            <button class="btn-done" onclick="window.markGodownDone('${order.time}')">✔️ Mark Cut</button>
+                        </div>
+                    `;
+                });
+            }
             const stockBody = document.getElementById('fullStockTable');
             stockBody.innerHTML = '';
             for (const [width, qty] of Object.entries(fullStock)) {
@@ -447,6 +542,7 @@
             }
 
             cutLogs.push(logEntry);
+            activeQueue.push(logEntry); // Send to Godown screen
             
             // 1. SAVE TO CLOUD
             await saveToServer(); 
@@ -516,6 +612,15 @@
             }
             
             window.closeModal(); // Hide the modal after deleting
+        };
+        // --- GODOWN COMPLETION FUNCTION ---
+        window.markGodownDone = async function(orderTime) {
+            const index = activeQueue.findIndex(o => o.time === orderTime);
+            if (index !== -1) {
+                activeQueue.splice(index, 1);
+                await saveToServer(); 
+                showNotification("Order marked as completed by Godown!", false);
+            }
         };
     </script>
 </body>
