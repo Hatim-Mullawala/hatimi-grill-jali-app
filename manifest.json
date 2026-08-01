@@ -1,7 +1,8 @@
 {
   "name": "Hatimi Jali Organizer",
   "short_name": "JaliTracker",
-  "start_url": "/",
+  "start_url": "./index.html",
+  "scope": ".",
   "display": "standalone",
   "theme_color": "#0A192F",
   "background_color": "#F4F7F6",
