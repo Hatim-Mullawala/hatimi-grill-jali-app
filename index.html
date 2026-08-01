@@ -600,11 +600,11 @@
                 });
             }
 
-           const logBody = document.getElementById('logTable');
+          const logBody = document.getElementById('logTable');
             logBody.innerHTML = '';
             let reversedLogs = [...cutLogs].reverse().slice(0, 15); 
             if(reversedLogs.length === 0) {
-                logBody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#999;">No cuts logged yet.</td></tr>';
+                logBody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#999; padding: 15px;">No cuts logged yet.</td></tr>';
             } else {
                 reversedLogs.forEach(log => {
                     // Convert log length from decimal feet back to exact inches for tallying
@@ -612,15 +612,15 @@
                     
                     logBody.innerHTML += `
                         <tr>
-                            <td style="font-size:12px; color:#666;">${log.time}</td>
-                            <td><strong>${log.customer || 'Walk-in'}</strong></td>
-                            <td>
+                            <td style="font-size:12px; color:#666; white-space: nowrap; padding-right: 20px;">${log.time}</td>
+                            <td style="white-space: nowrap; padding-right: 20px;"><strong>${log.customer || 'Walk-in'}</strong></td>
+                            <td style="white-space: nowrap; padding-right: 20px;">
                                 <strong style="color: #cc0000; font-size: 15px;">${log.width} ft × ${logLengthInches} in</strong>
                                 <div style="font-size: 12px; color: #888; margin-top: 2px;">(${log.width} x ${log.length} ft)</div>
                             </td>
-                            <td>${log.source}</td>
-                            <td>${log.leftover}</td>
-                            <td><button class="btn-delete" onclick="window.deleteCut('${log.time}')">🗑️ Delete</button></td>
+                            <td style="white-space: nowrap; padding-right: 20px;">${log.source}</td>
+                            <td style="white-space: nowrap; padding-right: 20px;">${log.leftover}</td>
+                            <td style="white-space: nowrap;"><button class="btn-delete" onclick="window.deleteCut('${log.time}')">🗑️ Delete</button></td>
                         </tr>`;
                 });
             }
