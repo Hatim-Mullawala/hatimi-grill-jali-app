@@ -1,723 +1,847 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <link rel="manifest" href="./manifest.json">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hatimi Hardware - Jali Organizer</title>
-    <style>
-        :root {
-            --navy: #0A192F;
-            --gold: #D4AF37;
-            --white: #FFFFFF;
-            --light-gray: #F4F7F6;
-            --text-main: #333333;
-            --success: #155724;
-            --success-bg: #d4edda;
-            --success-border: #c3e6cb;
-            --error: #721c24;
-            --error-bg: #f8d7da;
-        }
-        body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background-color: var(--light-gray);
-            color: var(--text-main);
-            margin: 0;
-            padding: 20px;
-        }
-        .header {
-            background-color: var(--navy);
-            color: var(--white);
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            border-bottom: 5px solid var(--gold);
-            margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            position: relative;
-        }
-        .header h1 { margin: 0; font-size: 26px; letter-spacing: 1px; text-transform: uppercase;}
-        
-        .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .panel { background: var(--white); padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-top: 3px solid var(--navy); }
-        .panel h3 { color: var(--navy); border-bottom: 2px solid var(--light-gray); padding-bottom: 10px; margin-top: 0; }
-        .smart-cutter { grid-column: 1 / -1; border: 2px solid var(--gold); }
-        .input-group { display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end; margin: 15px 0; }
-        .input-box { display: flex; flex-direction: column; }
-        .input-box label { font-weight: bold; margin-bottom: 5px; font-size: 14px; color: var(--navy); }
-        select, input { padding: 10px; font-size: 15px; border: 1px solid #ccc; border-radius: 6px; width: 160px; }
-        .btn-large { background-color: var(--navy); color: var(--gold); font-size: 16px; font-weight: bold; padding: 11px 25px; border: none; border-radius: 6px; cursor: pointer; transition: 0.3s; }
-        .btn-large:hover { background-color: #112A4F; color: var(--white); }
-        
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #eee; }
-        th { color: #888; font-weight: bold; font-size: 13px; text-transform: uppercase; background: #fdfdfd;}
-        .stock-controls { display: flex; align-items: center; gap: 8px; }
-        .btn-circle { background: var(--light-gray); border: 1px solid #ccc; color: var(--navy); border-radius: 50%; width: 28px; height: 28px; font-weight: bold; cursor: pointer; }
-        .btn-circle:hover { background: var(--gold); color: var(--navy); border-color: var(--gold); }
-        .offcut-tag { background: #fff8e1; color: #b08d00; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 14px; border: 1px solid #ffe57f; }
-        
-        #toast { visibility: hidden; min-width: 300px; background-color: var(--success-bg); color: var(--success); border: 1px solid var(--success-border); text-align: left; border-radius: 8px; padding: 16px 20px; position: fixed; z-index: 1000; right: 30px; top: 30px; font-size: 15px; box-shadow: 0 6px 15px rgba(0,0,0,0.15); opacity: 0; transition: opacity 0.4s, top 0.4s; line-height: 1.5; }
-        #toast.show { visibility: visible; opacity: 1; top: 50px; }
-        #toast.error { background-color: var(--error-bg); color: var(--error); border-color: #f5c6cb; }
-        
-        /* --- MOBILE RESPONSIVENESS --- */
-        .panel {
-            overflow-x: auto; /* Allows tables to scroll left/right on small screens */
-        }
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <link rel="manifest" href="./manifest.json">
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Hatimi Hardware - Jali Organizer</title>
+        <style>
+            :root {
+                --navy: #0A192F;
+                --gold: #D4AF37;
+                --white: #FFFFFF;
+                --light-gray: #F4F7F6;
+                --text-main: #333333;
+                --success: #155724;
+                --success-bg: #d4edda;
+                --success-border: #c3e6cb;
+                --error: #721c24;
+                --error-bg: #f8d7da;
+            }
+            body {
+                font-family: 'Segoe UI', system-ui, sans-serif;
+                background-color: var(--light-gray);
+                color: var(--text-main);
+                margin: 0;
+                padding: 20px;
+            }
+            .header {
+                background-color: var(--navy);
+                color: var(--white);
+                padding: 20px;
+                border-radius: 10px;
+                text-align: center;
+                border-bottom: 5px solid var(--gold);
+                margin-bottom: 20px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                position: relative;
+            }
+            .header h1 { margin: 0; font-size: 26px; letter-spacing: 1px; text-transform: uppercase;}
+            
+            .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+            .panel { background: var(--white); padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-top: 3px solid var(--navy); }
+            .panel h3 { color: var(--navy); border-bottom: 2px solid var(--light-gray); padding-bottom: 10px; margin-top: 0; }
+            .smart-cutter { grid-column: 1 / -1; border: 2px solid var(--gold); }
+            .input-group { display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end; margin: 15px 0; }
+            .input-box { display: flex; flex-direction: column; }
+            .input-box label { font-weight: bold; margin-bottom: 5px; font-size: 14px; color: var(--navy); }
+            select, input { padding: 10px; font-size: 15px; border: 1px solid #ccc; border-radius: 6px; width: 160px; }
+            .btn-large { background-color: var(--navy); color: var(--gold); font-size: 16px; font-weight: bold; padding: 11px 25px; border: none; border-radius: 6px; cursor: pointer; transition: 0.3s; }
+            .btn-large:hover { background-color: #112A4F; color: var(--white); }
+            
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+            th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #eee; }
+            th { color: #888; font-weight: bold; font-size: 13px; text-transform: uppercase; background: #fdfdfd;}
+            .stock-controls { display: flex; align-items: center; gap: 8px; }
+            .btn-circle { background: var(--light-gray); border: 1px solid #ccc; color: var(--navy); border-radius: 50%; width: 28px; height: 28px; font-weight: bold; cursor: pointer; }
+            .btn-circle:hover { background: var(--gold); color: var(--navy); border-color: var(--gold); }
+            .offcut-tag { background: #fff8e1; color: #b08d00; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 14px; border: 1px solid #ffe57f; }
+            
+            #toast { visibility: hidden; min-width: 300px; background-color: var(--success-bg); color: var(--success); border: 1px solid var(--success-border); text-align: left; border-radius: 8px; padding: 16px 20px; position: fixed; z-index: 1000; right: 30px; top: 30px; font-size: 15px; box-shadow: 0 6px 15px rgba(0,0,0,0.15); opacity: 0; transition: opacity 0.4s, top 0.4s; line-height: 1.5; }
+            #toast.show { visibility: visible; opacity: 1; top: 50px; }
+            #toast.error { background-color: var(--error-bg); color: var(--error); border-color: #f5c6cb; }
+            
+            /* --- MOBILE RESPONSIVENESS --- */
+            .panel {
+                overflow-x: auto; /* Allows tables to scroll left/right on small screens */
+            }
 
-        @media (max-width: 768px) {
-            .grid-layout { 
-                grid-template-columns: 1fr; /* Stacks panels on top of each other */
+            @media (max-width: 768px) {
+                .grid-layout { 
+                    grid-template-columns: 1fr; /* Stacks panels on top of each other */
+                }
+                .input-group { 
+                    flex-direction: column; 
+                    align-items: stretch; 
+                }
+                .input-box {
+                    width: 100%;
+                }
+                select, input { 
+                    width: 100%; /* Makes inputs full width on phones */
+                    box-sizing: border-box; 
+                }
+                .btn-large { 
+                    width: 100%; 
+                    margin-top: 10px;
+                    padding: 15px; /* Larger touch target for thumbs */
+                }
+                .header h1 {
+                    font-size: 22px; /* Slightly smaller title for mobile */
+                }
+                th, td {
+                    padding: 10px 5px; /* Tighter table spacing */
+                    font-size: 14px;
+                }
             }
-            .input-group { 
-                flex-direction: column; 
-                align-items: stretch; 
-            }
-            .input-box {
-                width: 100%;
-            }
-            select, input { 
-                width: 100%; /* Makes inputs full width on phones */
-                box-sizing: border-box; 
-            }
-            .btn-large { 
-                width: 100%; 
-                margin-top: 10px;
-                padding: 15px; /* Larger touch target for thumbs */
-            }
-            .header h1 {
-                font-size: 22px; /* Slightly smaller title for mobile */
-            }
-            th, td {
-                padding: 10px 5px; /* Tighter table spacing */
+            
+            /* --- DELETE BUTTON --- */
+            .btn-delete {
+                background-color: #ff4d4d; /* Soft red for warning */
+                color: white;
+                border: none;
+                padding: 6px 12px;
+                border-radius: 4px;
+                cursor: pointer;
                 font-size: 14px;
+                transition: background 0.3s ease;
             }
-        }
-        
-        /* --- DELETE BUTTON --- */
-        .btn-delete {
-            background-color: #ff4d4d; /* Soft red for warning */
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background 0.3s ease;
-        }
-        .btn-delete:hover {
-            background-color: #cc0000; /* Darker red on hover */
-        }
-        
-        /* --- CUSTOM PROFESSIONAL MODAL --- */
-        .modal-overlay {
-            display: none; /* Hidden by default */
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(10, 25, 47, 0.7); /* Hatimi Navy with transparency */
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-            backdrop-filter: blur(4px); /* Modern blurred background effect */
-        }
-        .modal-content {
-            background: var(--white);
-            padding: 30px;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 420px;
-            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
-            border-top: 5px solid var(--error); /* Red indicator for deletion */
-            text-align: center;
-        }
-        .modal-content h3 {
-            margin-top: 0;
-            color: var(--navy);
-            font-size: 22px;
-        }
-        .modal-content p {
-            color: #555;
-            font-size: 15px;
-            line-height: 1.5;
-        }
-        .modal-actions {
-            display: flex;
-            justify-content: space-between;
-            gap: 15px;
-            margin-top: 25px;
-        }
-        .btn-cancel {
-            flex: 1;
-            padding: 12px;
-            background: #e0e0e0;
-            color: #333;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 15px;
-            transition: 0.3s;
-        }
-        .btn-cancel:hover { background: #ccc; }
-        .btn-confirm-delete {
-            flex: 1;
-            padding: 12px;
-            background: var(--error);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 15px;
-            transition: 0.3s;
-        }
-        .btn-confirm-delete:hover { background: #900000; }
-        
-        /* --- GODOWN LIVE QUEUE --- */
-        .godown-panel {
-            border: 3px solid #ff4d4d;
-            background: #fff0f0;
-            margin-bottom: 20px;
-        }
-        .godown-panel h3 {
-            color: #cc0000;
-            border-bottom: 2px solid #ffcccc;
-        }
-        .queue-container {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        .queue-card {
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 6px solid #ff4d4d;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-        .queue-details {
-            font-size: 16px;
-            line-height: 1.4;
-        }
-        .queue-details strong {
-            color: var(--navy);
-            font-size: 20px;
-        }
-        .btn-done {
-            background: var(--success);
-            color: white;
-            border: none;
-            padding: 15px 25px;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        .btn-done:hover {
-            background: #114a1d;
-        }
-        
-        @media (max-width: 768px) {
-            .queue-card {
+            .btn-delete:hover {
+                background-color: #cc0000; /* Darker red on hover */
+            }
+            
+            /* --- CUSTOM PROFESSIONAL MODAL --- */
+            .modal-overlay {
+                display: none; /* Hidden by default */
+                position: fixed;
+                top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(10, 25, 47, 0.7); /* Hatimi Navy with transparency */
+                z-index: 2000;
+                justify-content: center;
+                align-items: center;
+                backdrop-filter: blur(4px); /* Modern blurred background effect */
+            }
+            .modal-content {
+                background: var(--white);
+                padding: 30px;
+                border-radius: 12px;
+                width: 90%;
+                max-width: 420px;
+                box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+                border-top: 5px solid var(--error); /* Red indicator for deletion */
+                text-align: center;
+            }
+            .modal-content h3 {
+                margin-top: 0;
+                color: var(--navy);
+                font-size: 22px;
+            }
+            .modal-content p {
+                color: #555;
+                font-size: 15px;
+                line-height: 1.5;
+            }
+            .modal-actions {
+                display: flex;
+                justify-content: space-between;
+                gap: 15px;
+                margin-top: 25px;
+            }
+            .btn-cancel {
+                flex: 1;
+                padding: 12px;
+                background: #e0e0e0;
+                color: #333;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: bold;
+                font-size: 15px;
+                transition: 0.3s;
+            }
+            .btn-cancel:hover { background: #ccc; }
+            .btn-confirm-delete {
+                flex: 1;
+                padding: 12px;
+                background: var(--error);
+                color: white;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: bold;
+                font-size: 15px;
+                transition: 0.3s;
+            }
+            .btn-confirm-delete:hover { background: #900000; }
+            
+            /* --- GODOWN LIVE QUEUE --- */
+            .godown-panel {
+                border: 3px solid #ff4d4d;
+                background: #fff0f0;
+                margin-bottom: 20px;
+            }
+            .godown-panel h3 {
+                color: #cc0000;
+                border-bottom: 2px solid #ffcccc;
+            }
+            .queue-container {
+                display: flex;
                 flex-direction: column;
-                align-items: flex-start;
                 gap: 15px;
             }
-            .btn-done {
-                width: 100%;
+            .queue-card {
+                background: white;
+                padding: 15px;
+                border-radius: 8px;
+                border-left: 6px solid #ff4d4d;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             }
+            .queue-details {
+                font-size: 16px;
+                line-height: 1.4;
+            }
+            .queue-details strong {
+                color: var(--navy);
+                font-size: 20px;
+            }
+            .btn-done {
+                background: var(--success);
+                color: white;
+                border: none;
+                padding: 15px 25px;
+                border-radius: 6px;
+                font-size: 16px;
+                font-weight: bold;
+                cursor: pointer;
+                transition: 0.3s;
+            }
+            .btn-done:hover {
+                background: #114a1d;
+            }
+            
+            @media (max-width: 768px) {
+                .queue-card {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 15px;
+                }
+                .btn-done {
+                    width: 100%;
+                }
+            }
+        /* --- MODERN PROFESSIONAL DROPDOWN --- */
+        .modern-select {
+            appearance: none; /* Removes default browser styling */
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            width: 100%;
+            height: 45px; /* Forces exact height to match text boxes */
+            box-sizing: border-box; /* Prevents padding from inflating the size */
+            padding: 10px 16px;
+            padding-right: 40px; /* Leaves space for the new arrow */
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--navy);
+            background-color: #ffffff;
+            border: 1px solid #cbd5e1; /* Matched border thickness */
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            
+            /* Custom minimalist SVG arrow */
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
         }
-    </style>
-    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-    <script>
-        window.OneSignalDeferred = window.OneSignalDeferred || [];
-        OneSignalDeferred.push(async function(OneSignal) {
-            await OneSignal.init({
-                appId: "f3b6b4a5-2fbd-417f-b990-14fa64d6d350",
-                serviceWorkerParam: { scope: "/hatimi-grill-jali-app/" },
-                serviceWorkerPath: "/hatimi-grill-jali-app/OneSignalSDKWorker.js" 
-            });
-        });
-    </script>
-</head>
-<body>
-    <!-- CUSTOM CONFIRM DELETE MODAL -->
-    <div id="deleteModal" class="modal-overlay">
-        <div class="modal-content">
-            <h3>Confirm Deletion</h3>
-            <p>Are you sure you want to delete this log entry?</p>
-            <p style="font-size: 13px; color: #777; background: #f9f9f9; padding: 10px; border-radius: 6px; border: 1px solid #eee;">
-                <strong>Note:</strong> You will need to manually adjust your stock using the +/- buttons if you need to return the sheet to inventory.
-            </p>
-            <div class="modal-actions">
-                <button class="btn-cancel" onclick="window.closeModal()">Cancel</button>
-                <button class="btn-confirm-delete" onclick="window.confirmDeleteAction()">Yes, Delete</button>
-            </div>
-        </div>
-    </div>
-    <!-- GODOWN QUEUE DELETE MODAL -->
-    <div id="godownDeleteModal" class="modal-overlay">
-        <div class="modal-content">
-            <h3>Cancel Requirement</h3>
-            <p>Are you sure you want to delete this size requirement?</p>
-            <p style="font-size: 13px; color: #777; background: #f9f9f9; padding: 10px; border-radius: 6px; border: 1px solid #eee;">
-                <strong>Note:</strong> Stock will NOT be deducted. This just removes it from the godown screen.
-            </p>
-            <div class="modal-actions">
-                <button class="btn-cancel" onclick="window.closeGodownModal()">Cancel</button>
-                <button class="btn-confirm-delete" onclick="window.confirmGodownDeleteAction()">Yes, Delete</button>
-            </div>
-        </div>
-    </div>
-    <div class="header">
-        <h1>Hatimi Hardware - Jali Organizer</h1>
-        <p style="margin:5px 0 0 0; color:#ddd;">Smart Cutting, Inventory & Live Cloud Sync</p>
-    </div>
 
-    <div id="toast"></div>
-    
-    <!-- GODOWN QUEUE -->
-    <div class="panel godown-panel">
-        <h3>🔴 Live Godown Orders (To Be Cut)</h3>
-        <div id="godownQueue" class="queue-container"></div>
-    </div>
-    
-    <div class="panel smart-cutter">
-        <h3>Smart Customer Cut</h3>
-        <div class="input-group">
-            <div class="input-box">
-                <label>Customer Name:</label>
-                <input type="text" id="custName" placeholder="Enter Name" style="width: 200px;">
-            </div>
-            <div class="input-box">
-                <label>Width Needed:</label>
-                <select id="reqWidth">
-                    <option value="2">2 ft</option>
-                    <option value="2.5">2.5 ft</option>
-                    <option value="3">3 ft</option>
-                    <option value="3.5">3.5 ft</option>
-                    <option value="4">4 ft</option>
-                    <option value="5">5 ft</option>
-                </select>
-            </div>
-            <!-- LENGTH INPUT (FEET & INCHES SYNC) -->
-            <div class="input-box" style="display: flex; flex-direction: column; min-width: 170px;">
-                <label style="font-weight: 600; font-size: 14px; color: #1a237e; margin-bottom: 5px;">Length Needed:</label>
-                <div style="display: flex; gap: 6px;">
-                    <!-- Feet Input -->
-                    <div style="display: flex; align-items: center; border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden; background: white; width: 50%;">
-                        <input type="number" id="reqLength" placeholder="0.0" step="0.1" style="width: 100%; border: none; padding: 10px 5px; outline: none; text-align: center; font-size: 15px; color: #1a237e; font-weight: bold;">
-                        <span style="background: #f8fafc; padding: 10px 5px; color: #64748b; font-size: 12px; font-weight: 600; border-left: 1px solid #cbd5e1;">ft</span>
-                    </div>
-                    <!-- Inches Input -->
-                    <div style="display: flex; align-items: center; border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden; background: white; width: 50%;">
-                        <input type="number" id="reqLengthInches" placeholder="0" step="1" style="width: 100%; border: none; padding: 10px 5px; outline: none; text-align: center; font-size: 15px; color: #1a237e; font-weight: bold;">
-                        <span style="background: #f8fafc; padding: 10px 5px; color: #64748b; font-size: 12px; font-weight: 600; border-left: 1px solid #cbd5e1;">in</span>
-                    </div>
+        .modern-select:hover {
+            border-color: #94a3b8;
+        }
+
+        .modern-select:focus {
+            outline: none;
+            border-color: var(--navy);
+            box-shadow: 0 0 0 3px rgba(10, 25, 47, 0.15); /* Navy blue glow */
+        }
+        
+        </style>
+        <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+        <script>
+            window.OneSignalDeferred = window.OneSignalDeferred || [];
+            OneSignalDeferred.push(async function(OneSignal) {
+                await OneSignal.init({
+                    appId: "f3b6b4a5-2fbd-417f-b990-14fa64d6d350",
+                    serviceWorkerParam: { scope: "/hatimi-grill-jali-app/" },
+                    serviceWorkerPath: "/hatimi-grill-jali-app/OneSignalSDKWorker.js" 
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <!-- CUSTOM CONFIRM DELETE MODAL -->
+        <div id="deleteModal" class="modal-overlay">
+            <div class="modal-content">
+                <h3>Confirm Deletion</h3>
+                <p>Are you sure you want to delete this log entry?</p>
+                <p style="font-size: 13px; color: #777; background: #f9f9f9; padding: 10px; border-radius: 6px; border: 1px solid #eee;">
+                    <strong>Note:</strong> You will need to manually adjust your stock using the +/- buttons if you need to return the sheet to inventory.
+                </p>
+                <div class="modal-actions">
+                    <button class="btn-cancel" onclick="window.closeModal()">Cancel</button>
+                    <button class="btn-confirm-delete" onclick="window.confirmDeleteAction()">Yes, Delete</button>
                 </div>
             </div>
-            <!-- PROFESSIONAL LIVE CALCULATOR -->
-            <div class="input-box" style="display: flex; flex-direction: column; min-width: 130px;">
-                <label style="font-weight: 600; font-size: 14px; color: #1a237e; margin-bottom: 5px;">Live Area (Sq Ft):</label>
-                <div style="display: flex; align-items: center; justify-content: center; height: 100%; min-height: 40px; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; border-bottom: 3px solid #d4af37; box-sizing: border-box; padding: 0 10px;">
-                    <span id="liveSqFt" style="font-size: 17px; font-weight: bold; color: #1a237e;">0.00</span>
+        </div>
+        <!-- GODOWN QUEUE DELETE MODAL -->
+        <div id="godownDeleteModal" class="modal-overlay">
+            <div class="modal-content">
+                <h3>Cancel Requirement</h3>
+                <p>Are you sure you want to delete this size requirement?</p>
+                <p style="font-size: 13px; color: #777; background: #f9f9f9; padding: 10px; border-radius: 6px; border: 1px solid #eee;">
+                    <strong>Note:</strong> Stock will NOT be deducted. This just removes it from the godown screen.
+                </p>
+                <div class="modal-actions">
+                    <button class="btn-cancel" onclick="window.closeGodownModal()">Cancel</button>
+                    <button class="btn-confirm-delete" onclick="window.confirmGodownDeleteAction()">Yes, Delete</button>
                 </div>
             </div>
-            <div class="input-box" style="flex-direction: row; gap: 10px;">
-                <button class="btn-large" style="background-color: #28a745; color: white; padding: 11px 15px;" onclick="window.addSizeToCart()">➕ Add Size</button>
-                <button class="btn-large" onclick="window.processSmartCut()">🚀 Send to Godown</button>
-            </div>
+        </div>
+        <div class="header">
+            <h1>Hatimi Hardware - Jali Organizer</h1>
+            <p style="margin:5px 0 0 0; color:#ddd;">Smart Cutting, Inventory & Live Cloud Sync</p>
+        </div>
+
+        <div id="toast"></div>
+        
+        <!-- GODOWN QUEUE -->
+        <div class="panel godown-panel">
+            <h3>🔴 Live Godown Orders (To Be Cut)</h3>
+            <div id="godownQueue" class="queue-container"></div>
         </div>
         
-        <!-- TEMPORARY CART FOR CURRENT CUSTOMER -->
-        <div id="customerCart" style="margin-top: 15px; display: none; background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
-            <h4 style="margin-top: 0; margin-bottom: 10px; color: var(--navy);">Sizes to Send:</h4>
-            <ul id="cartList" style="list-style: none; padding: 0; margin: 0 0 15px 0;"></ul>
-            <button class="btn-large" onclick="window.processSmartCut()">🚀 Send All to Godown</button>
+        <div class="panel smart-cutter">
+            <h3>Smart Customer Cut</h3>
+            <div class="input-group">
+                <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end; margin-bottom: 20px;">
+    
+  <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end; margin-bottom: 20px;">
+    
+    <!-- Customer Name -->
+    <div style="flex: 2; min-width: 150px;">
+        <label style="font-weight: bold; color: var(--navy); font-size: 13px; display: block; margin-bottom: 5px;">Customer Name:</label>
+        <input type="text" id="custName" placeholder="Enter Name" style="width: 100%; height: 45px; padding: 10px 15px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 15px;">
+    </div>
+    
+    <!-- Roll Width -->
+    <div style="flex: 1; min-width: 100px;">
+        <label style="font-weight: bold; color: var(--navy); font-size: 13px; display: block; margin-bottom: 5px;">Width Needed:</label>
+        <select id="reqWidth" class="modern-select" style="height: 45px; background-color: white;">
+            <option value="2">2 ft</option>
+            <option value="2.5">2.5 ft</option>
+            <option value="3">3 ft</option>
+            <option value="3.5">3.5 ft</option>
+            <option value="4">4 ft</option>
+            <option value="5">5 ft</option>
+        </select>
+    </div>
+
+    <!-- Single Length Box with Unit Selector -->
+    <div style="flex: 1.5; min-width: 180px;">
+        <label style="font-weight: bold; color: var(--navy); font-size: 13px; display: block; margin-bottom: 5px;">Length Needed:</label>
+        <div style="display: flex; height: 45px; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; box-sizing: border-box; background: white;">
+            <input type="number" id="reqLengthValue" placeholder="0.0" step="1" style="flex: 1; width: 100%; height: 100%; padding: 10px 15px; border: none; font-size: 16px; font-weight: bold; outline: none; box-sizing: border-box;">
+            <select id="reqLengthUnit" style="background: #f8fafc; border: none; border-left: 1px solid #cbd5e1; padding: 0 10px; font-weight: bold; font-size: 15px; color: var(--navy); outline: none; cursor: pointer;">
+                <option value="in" selected>in</option>
+                <option value="ft">ft</option>
+            </select>
         </div>
     </div>
 
-    <div class="grid-layout">
-        <div class="panel">
-            <h3>Full Straight Sheets (12ft)</h3>
-            <table>
-                <thead>
-                    <tr><th>Width</th><th>Qty in Stock</th><th>Adjust</th></tr>
-                </thead>
-                <tbody id="fullStockTable"></tbody>
-            </table>
-        </div>
-
-        <div class="panel">
-            <h3>Offcut Bin (Leftovers)</h3>
-            <table>
-                <thead>
-                    <tr><th>Piece ID</th><th>Width</th><th>Remaining Length</th></tr>
-                </thead>
-                <tbody id="offcutTable"></tbody>
-            </table>
-        </div>
-
-        <div class="panel" style="grid-column: 1 / -1;">
-            <h3>Daily Cut & Sales Log</h3>
-            <table>
-                <thead>
-                    <tr><th>Date & Time</th><th>Customer</th><th>Size Cut</th><th>Source Piece</th><th>Leftover Saved</th><th>Action</th></tr>
-                </thead>
-                <tbody id="logTable"></tbody>
-            </table>
+    <!-- Live Area -->
+    <div style="flex: 1; min-width: 120px;">
+        <label style="font-weight: bold; color: var(--navy); font-size: 13px; display: block; margin-bottom: 5px;">Live Area (Sq Ft):</label>
+        <div id="liveSqFt" style="height: 45px; display: flex; align-items: center; justify-content: center; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 16px; font-weight: bold; color: var(--navy); box-sizing: border-box;">
+            0.00
         </div>
     </div>
 
-    <script type="module">
-        // Firebase Cloud Module
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    <!-- Action Buttons -->
+    <div style="display: flex; gap: 10px; flex-wrap: wrap; height: 45px;">
+        <button onclick="window.addSizeToCart()" style="height: 45px; background: #10b981; color: white; border: none; padding: 0 20px; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; box-sizing: border-box; font-size: 15px;">
+            ➕ Add Size
+        </button>
+        <button onclick="window.processSmartCut()" style="height: 45px; background: var(--navy); color: white; border: none; padding: 0 20px; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; box-sizing: border-box; font-size: 15px;">
+            🚀 Send to Godown
+        </button>
+    </div>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBitqayX2VPBNpV3wpDKyZEnJxE7dgWEWE",
-            authDomain: "hatimi-jali-app.firebaseapp.com",
-            projectId: "hatimi-jali-app",
-            storageBucket: "hatimi-jali-app.firebasestorage.app",
-            messagingSenderId: "631367054682",
-            appId: "1:631367054682:web:884fa53b80f7b21b542f63",
-            measurementId: "G-W8KXHXRN1D"
-        };
+</div>          
+            <!-- TEMPORARY CART FOR CURRENT CUSTOMER -->
+            <div id="customerCart" style="margin-top: 15px; display: none; background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+                <h4 style="margin-top: 0; margin-bottom: 10px; color: var(--navy);">Sizes to Send:</h4>
+                <ul id="cartList" style="list-style: none; padding: 0; margin: 0 0 15px 0;"></ul>
+                <button class="btn-large" onclick="window.processSmartCut()">🚀 Send All to Godown</button>
+            </div>
+        </div>
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const inventoryRef = doc(db, "hatimi_data", "jali_inventory");
+        <div class="grid-layout">
+            <div class="panel">
+                <h3>Full Straight Sheets (12ft)</h3>
+                <table>
+                    <thead>
+                        <tr><th>Width</th><th>Qty in Stock</th><th>Adjust</th></tr>
+                    </thead>
+                    <tbody id="fullStockTable"></tbody>
+                </table>
+            </div>
+<div class="panel">
+                <h3>Offcut Bin (Leftovers)</h3>
+                
+                <!-- Manual Scrap Entry Tool -->
+<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
+    
+    <div style="font-size: 14px; font-weight: bold; color: var(--navy);">
+        ➕ Add Scrap:
+    </div>
+    
+    <div style="display: flex; gap: 10px; flex: 1; min-width: 250px;">
+        <!-- Scrap Width -->
+        <select id="manualScrapWidth" class="modern-select" style="height: 45px; flex: 1; min-width: 100px; background-color: white;">
+            <option value="2">2 ft</option>
+            <option value="2.5">2.5 ft</option>
+            <option value="3">3 ft</option>
+            <option value="3.5">3.5 ft</option>
+            <option value="4">4 ft</option>
+            <option value="5">5 ft</option>
+        </select>
+        
+        <!-- Scrap Length (Strictly Inches) -->
+        <div style="display: flex; height: 45px; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; box-sizing: border-box; background: white; flex: 1; min-width: 120px;">
+            <input type="number" id="manualScrapInches" placeholder="Size" step="1" style="flex: 1; width: 100%; height: 100%; padding: 10px 15px; border: none; font-size: 16px; font-weight: bold; outline: none; box-sizing: border-box;">
+            <div style="background: #f8fafc; border-left: 1px solid #cbd5e1; padding: 0 15px; display: flex; align-items: center; font-weight: bold; font-size: 14px; color: #94a3b8;">
+                in
+            </div>
+        </div>
+    </div>
+    
+    <button onclick="window.addManualScrap()" style="height: 45px; background: var(--navy); color: white; border: none; padding: 0 20px; border-radius: 6px; font-weight: bold; cursor: pointer; white-space: nowrap;">
+        Save Piece
+    </button>
+</div>
 
-        let fullStock = { "2": 0, "2.5": 0, "3": 0, "3.5": 0, "4": 0, "5": 0 };
-        let offcuts = [];
-        let cutLogs = [];
-        let activeQueue = []; 
-        let currentCustomerCart = []; // NEW: Temporary holding list for sizes
+                <table>
+                    <thead>
+                        <tr><th>Piece ID</th><th>Width</th><th>Remaining Length</th></tr>
+                    </thead>
+                    <tbody id="offcutTable"></tbody>
+                </table>
+            </div>
 
-        onSnapshot(inventoryRef, (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                fullStock = data.fullStock || fullStock;
-                offcuts = data.offcuts || [];
-                cutLogs = data.cutLogs || [];
-                activeQueue = data.activeQueue || []; 
-                renderUI();
-            } else {
-                saveToServer();
-            }
-        });
+            <div class="panel" style="grid-column: 1 / -1;">
+                <h3>Daily Cut & Sales Log</h3>
+                <table>
+                    <thead>
+                        <tr><th>Date & Time</th><th>Customer</th><th>Size Cut</th><th>Source Piece</th><th>Leftover Saved</th><th>Action</th></tr>
+                    </thead>
+                    <tbody id="logTable"></tbody>
+                </table>
+            </div>
+        </div>
+<!-- PROFESSIONAL OFFCUT DELETE MODAL -->
+<div id="offcutDeleteModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(2px);">
+    <div style="background: white; width: 90%; max-width: 350px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow: hidden; border: 1px solid #e2e8f0;">
+        
+        <!-- Header -->
+        <div style="background: #fef2f2; padding: 15px 20px; border-bottom: 1px solid #fee2e2; display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 20px;">🗑️</span>
+            <h3 style="margin: 0; color: #991b1b; font-size: 16px; font-weight: 700;">Delete Scrap Piece?</h3>
+        </div>
+        
+        <!-- Body -->
+        <div style="padding: 20px; color: #475569; font-size: 15px; line-height: 1.5; text-align: center;">
+            Are you sure you want to permanently remove <strong id="offcutDeleteIdText" style="color: var(--navy); font-size: 16px;">[ID]</strong> from the inventory?
+        </div>
+        
+        <!-- Footer / Actions -->
+        <div style="padding: 15px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; gap: 10px; justify-content: flex-end;">
+            <button onclick="window.closeOffcutModal()" style="padding: 10px 15px; border: 1px solid #cbd5e1; background: white; color: #475569; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px;">
+                Cancel
+            </button>
+            <button onclick="window.confirmOffcutDelete()" style="padding: 10px 15px; border: none; background: #ef4444; color: white; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);">
+                Yes, Delete
+            </button>
+        </div>
 
-        async function saveToServer() {
-            offcuts = offcuts.filter(item => parseFloat(item.length) > 0);
-            await setDoc(inventoryRef, {
-                fullStock: fullStock,
-                offcuts: offcuts,
-                cutLogs: cutLogs,
-                activeQueue: activeQueue 
+    </div>
+</div>
+        <script type="module">
+            // Firebase Cloud Module
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+            import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+            const firebaseConfig = {
+                apiKey: "AIzaSyBitqayX2VPBNpV3wpDKyZEnJxE7dgWEWE",
+                authDomain: "hatimi-jali-app.firebaseapp.com",
+                projectId: "hatimi-jali-app",
+                storageBucket: "hatimi-jali-app.firebasestorage.app",
+                messagingSenderId: "631367054682",
+                appId: "1:631367054682:web:884fa53b80f7b21b542f63",
+                measurementId: "G-W8KXHXRN1D"
+            };
+
+            const app = initializeApp(firebaseConfig);
+            const db = getFirestore(app);
+            const inventoryRef = doc(db, "hatimi_data", "jali_inventory");
+
+            let fullStock = { "2": 0, "2.5": 0, "3": 0, "3.5": 0, "4": 0, "5": 0 };
+            let offcuts = [];
+            let cutLogs = [];
+            let activeQueue = []; 
+            let currentCustomerCart = []; // NEW: Temporary holding list for sizes
+
+            onSnapshot(inventoryRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    fullStock = data.fullStock || fullStock;
+                    offcuts = data.offcuts || [];
+                    cutLogs = data.cutLogs || [];
+                    activeQueue = data.activeQueue || []; 
+                    renderUI();
+                } else {
+                    saveToServer();
+                }
             });
-        }
-// --- SMART CALCULATOR (FEET & INCHES SYNC) ---
-        const inputFt = document.getElementById('reqLength');
-        const inputIn = document.getElementById('reqLengthInches');
+
+            async function saveToServer() {
+                offcuts = offcuts.filter(item => parseFloat(item.length) > 0);
+                await setDoc(inventoryRef, {
+                    fullStock: fullStock,
+                    offcuts: offcuts,
+                    cutLogs: cutLogs,
+                    activeQueue: activeQueue 
+                });
+            }
+    // --- SMART CALCULATOR (SINGLE BOX) ---
+        const inputValue = document.getElementById('reqLengthValue');
+        const inputUnit = document.getElementById('reqLengthUnit');
         const inputWidth = document.getElementById('reqWidth');
         const displaySqFt = document.getElementById('liveSqFt');
 
         window.updateLiveSqFt = function() {
             const width = parseFloat(inputWidth.value) || 0;
-            const ft = parseFloat(inputFt.value) || 0;
+            const val = parseFloat(inputValue.value) || 0;
+            const unit = inputUnit.value;
+            
+            // Convert inches to feet just for the Square Feet display math
+            const ft = unit === 'in' ? val / 12 : val;
             displaySqFt.innerText = (width * ft).toFixed(2);
         };
 
-        // 1. Typing in FEET automatically updates INCHES
-        inputFt.addEventListener('input', function() {
-            if (this.value) {
-                inputIn.value = (parseFloat(this.value) * 12).toFixed(1);
-            } else {
-                inputIn.value = '';
-            }
-            window.updateLiveSqFt();
-        });
+        // Listen for typing or changing the dropdowns
+        if (inputValue) inputValue.addEventListener('input', window.updateLiveSqFt);
+        if (inputUnit) inputUnit.addEventListener('change', window.updateLiveSqFt);
+        if (inputWidth) inputWidth.addEventListener('change', window.updateLiveSqFt);
 
-        // 2. Typing in INCHES automatically updates FEET
-        inputIn.addEventListener('input', function() {
-            if (this.value) {
-                inputFt.value = (parseFloat(this.value) / 12).toFixed(2);
-            } else {
-                inputFt.value = '';
-            }
-            window.updateLiveSqFt();
-        });
+            // 3. Changing WIDTH updates Square Feet
+            inputWidth.addEventListener('input', window.updateLiveSqFt);    
 
-        // 3. Changing WIDTH updates Square Feet
-        inputWidth.addEventListener('input', window.updateLiveSqFt);    
+            function renderUI() {
+                // Draw Godown Queue (Grouped by Customer)
+                const queueContainer = document.getElementById('godownQueue');
+                queueContainer.innerHTML = '';
+                
+                if (activeQueue.length === 0) {
+                    queueContainer.innerHTML = '<p style="text-align:center; color:#888; font-weight:bold;">No pending orders for godown.</p>';
+                } else {
+                    // 1. Group the flat queue by Customer Name
+                    const groupedOrders = {};
+                    activeQueue.forEach(order => {
+                        const custName = order.customer || 'Walk-in';
+                        if (!groupedOrders[custName]) {
+                            groupedOrders[custName] = [];
+                        }
+                        groupedOrders[custName].push(order);
+                    });
 
-           function renderUI() {
-            // Draw Godown Queue (Grouped by Customer)
-            const queueContainer = document.getElementById('godownQueue');
-            queueContainer.innerHTML = '';
-            
-            if (activeQueue.length === 0) {
-                queueContainer.innerHTML = '<p style="text-align:center; color:#888; font-weight:bold;">No pending orders for godown.</p>';
-            } else {
-                // 1. Group the flat queue by Customer Name
-                const groupedOrders = {};
-                activeQueue.forEach(order => {
-                    const custName = order.customer || 'Walk-in';
-                    if (!groupedOrders[custName]) {
-                        groupedOrders[custName] = [];
-                    }
-                    groupedOrders[custName].push(order);
-                });
+                // 2. Create one Master Card per Customer (MOBILE OPTIMIZED)
+                    for (const [customerName, items] of Object.entries(groupedOrders)) {
+                        let cardHTML = `
+                            <div class="queue-card" style="margin-bottom: 15px; background: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow: hidden; border: 1px solid #e2e8f0;">
+                                
+                                <!-- Customer Header (Clean Navy/Slate) -->
+                                <div style="background-color: #f8fafc; padding: 12px 15px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between;">
+                                    <h4 style="margin: 0; font-size: 15px; font-weight: 700; color: var(--navy, #0f172a); text-transform: uppercase; letter-spacing: 0.5px;">
+                                        🛒 ${customerName}
+                                    </h4>
+                                    <span style="background: #e2e8f0; color: #475569; font-size: 11px; padding: 4px 8px; border-radius: 4px; font-weight: 700;">
+                                        ${items.length} ITEM(S)
+                                    </span>
+                                </div>
+                                
+                                <!-- Strict Vertical List of items for this customer -->
+                                <div style="padding: 15px; display: flex; flex-direction: column; gap: 15px;">
+                        `;
 
-              // 2. Create one Master Card per Customer (MOBILE OPTIMIZED)
-                for (const [customerName, items] of Object.entries(groupedOrders)) {
-                    let cardHTML = `
-                        <div class="queue-card" style="margin-bottom: 15px; background: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow: hidden; border: 1px solid #e2e8f0;">
+                        // 3. List every size for this customer inside their box
+                        items.forEach((order, index) => {
+                            const isLast = index === items.length - 1;
+                            const borderStyle = isLast ? '' : 'border-bottom: 1px dashed #cbd5e1; padding-bottom: 15px;';
                             
-                            <!-- Customer Header (Clean Navy/Slate) -->
-                            <div style="background-color: #f8fafc; padding: 12px 15px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between;">
-                                <h4 style="margin: 0; font-size: 15px; font-weight: 700; color: var(--navy, #0f172a); text-transform: uppercase; letter-spacing: 0.5px;">
-                                    🛒 ${customerName}
-                                </h4>
-                                <span style="background: #e2e8f0; color: #475569; font-size: 11px; padding: 4px 8px; border-radius: 4px; font-weight: 700;">
-                                    ${items.length} ITEM(S)
-                                </span>
-                            </div>
+                            // Convert decimal feet back to exact inches for the tape measure
+                            const lengthInches = Math.round(parseFloat(order.reqLength) * 12);
                             
-                            <!-- Strict Vertical List of items for this customer -->
-                            <div style="padding: 15px; display: flex; flex-direction: column; gap: 15px;">
-                    `;
-
-                    // 3. List every size for this customer inside their box
-                    items.forEach((order, index) => {
-                        const isLast = index === items.length - 1;
-                        const borderStyle = isLast ? '' : 'border-bottom: 1px dashed #cbd5e1; padding-bottom: 15px;';
-                        
-                        // Convert decimal feet back to exact inches for the tape measure
-                        const lengthInches = Math.round(parseFloat(order.reqLength) * 12);
-                        
-                        cardHTML += `
-                                <div style="display: flex; flex-direction: column; gap: 12px; width: 100%; ${borderStyle}">
-                                    
-                                    <!-- Shop Requested Header -->
-                                    <div style="display: flex; flex-direction: column; gap: 2px;">
-                                        <span style="color:#64748b; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Requested Size</span>
-                                        <div style="font-size: 18px; color: var(--navy, #0f172a); font-weight: 700;">
-                                            ${order.reqWidth} <span style="font-size: 14px; color: #94a3b8; font-weight: 500;">ft</span> 
-                                            <span style="color: #cbd5e1; margin: 0 4px; font-weight: normal;">×</span> 
-                                            <span style="color: #ef4444; font-size: 22px;">${lengthInches}</span> <span style="font-size: 14px; color: #94a3b8; font-weight: 500;">inches</span>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Action Row (Inputs and Buttons) -->
-                                    <div style="background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 10px;">
+                            cardHTML += `
+                                    <div style="display: flex; flex-direction: column; gap: 12px; width: 100%; ${borderStyle}">
                                         
-                                        <div style="font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px;">CONFIRM ACTUAL CUT:</div>
-                                        
-                                        <!-- Inputs (FLEXBOX FOR MOBILE PERFECT FIT) -->
-                                        <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
-                                            <select id="godownWidth_${order.id}" style="flex: 1; min-width: 0; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 15px; background: white; color: #0f172a; font-weight: 600; outline: none; box-sizing: border-box;">
-                                                <option value="2" ${order.reqWidth === '2' ? 'selected' : ''}>2 ft</option>
-                                                <option value="2.5" ${order.reqWidth === '2.5' ? 'selected' : ''}>2.5 ft</option>
-                                                <option value="3" ${order.reqWidth === '3' ? 'selected' : ''}>3 ft</option>
-                                                <option value="3.5" ${order.reqWidth === '3.5' ? 'selected' : ''}>3.5 ft</option>
-                                                <option value="4" ${order.reqWidth === '4' ? 'selected' : ''}>4 ft</option>
-                                                <option value="5" ${order.reqWidth === '5' ? 'selected' : ''}>5 ft</option>
-                                            </select>
-                                            
-                                            <span style="color: #94a3b8; font-weight: bold; font-size: 14px;">✕</span>
-                                            
-                                            <div style="flex: 1; min-width: 0; position: relative; display: flex; align-items: center;">
-                                                <input type="number" id="godownLengthInches_${order.id}" value="${lengthInches}" step="1" style="width: 100%; padding: 10px; padding-right: 32px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 16px; font-weight: bold; color: #ef4444; text-align: center; outline: none; box-sizing: border-box; background: white;">
-                                                <span style="position: absolute; right: 10px; color: #94a3b8; font-size: 13px; font-weight: 600;">in</span>
+                                        <!-- Shop Requested Header -->
+                                        <div style="display: flex; flex-direction: column; gap: 2px;">
+                                            <span style="color:#64748b; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Requested Size</span>
+                                            <div style="font-size: 18px; color: var(--navy, #0f172a); font-weight: 700;">
+                                                ${order.reqWidth} <span style="font-size: 14px; color: #94a3b8; font-weight: 500;">ft</span> 
+                                                <span style="color: #cbd5e1; margin: 0 4px; font-weight: normal;">×</span> 
+                                                <span style="color: #ef4444; font-size: 22px;">${lengthInches}</span> <span style="font-size: 14px; color: #94a3b8; font-weight: 500;">inches</span>
                                             </div>
                                         </div>
                                         
-                                        <!-- Action Buttons (GRID SETUP FOR THUMBS) -->
-                                        <div style="display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 4px;">
-                                            <button style="background: #10b981; color: white; border: none; padding: 12px; border-radius: 4px; font-weight: 700; cursor: pointer; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);" onclick="window.processGodownCut('${order.id}')">
-                                                ✓ Process Cut
-                                            </button>
-                                            <button style="background: white; color: #ef4444; border: 1px solid #fca5a5; padding: 0 16px; border-radius: 4px; cursor: pointer; font-size: 16px;" onclick="window.deleteGodownOrder('${order.id}')">
+                                        <!-- Action Row (Inputs and Buttons) -->
+                                        <div style="background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 10px;">
+                                            
+                                            <div style="font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px;">CONFIRM ACTUAL CUT:</div>
+                                            
+                                            <!-- Inputs (FLEXBOX FOR MOBILE PERFECT FIT) -->
+                                            <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
+                                                <select id="godownWidth_${order.id}" class="modern-select" style="flex: 1; min-width: 0;">
+    <option value="2" ${order.reqWidth === '2' ? 'selected' : ''}>2 ft</option>
+    <option value="2.5" ${order.reqWidth === '2.5' ? 'selected' : ''}>2.5 ft</option>
+    <option value="3" ${order.reqWidth === '3' ? 'selected' : ''}>3 ft</option>
+    <option value="3.5" ${order.reqWidth === '3.5' ? 'selected' : ''}>3.5 ft</option>
+    <option value="4" ${order.reqWidth === '4' ? 'selected' : ''}>4 ft</option>
+    <option value="5" ${order.reqWidth === '5' ? 'selected' : ''}>5 ft</option>
+</select>
+                                                
+                                                <span style="color: #94a3b8; font-weight: bold; font-size: 14px;">✕</span>
+                                                
+                                                <div style="flex: 1; min-width: 0; position: relative; display: flex; align-items: center;">
+                                                    <input type="number" id="godownLengthInches_${order.id}" value="${lengthInches}" step="1" style="width: 100%; padding: 10px; padding-right: 32px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 16px; font-weight: bold; color: #ef4444; text-align: center; outline: none; box-sizing: border-box; background: white;">
+                                                    <span style="position: absolute; right: 10px; color: #94a3b8; font-size: 13px; font-weight: 600;">in</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Action Buttons (GRID SETUP FOR THUMBS) -->
+                                            <div style="display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 4px;">
+                                                <button style="background: #10b981; color: white; border: none; padding: 12px; border-radius: 4px; font-weight: 700; cursor: pointer; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);" onclick="window.processGodownCut('${order.id}')">
+                                                    ✓ Process Cut
+                                                </button>
+                                                <button style="background: white; color: #ef4444; border: 1px solid #fca5a5; padding: 0 16px; border-radius: 4px; cursor: pointer; font-size: 16px;" onclick="window.deleteGodownOrder('${order.id}')">
+                                                    🗑️
+                                                </button>
+                                            </div>
+                                            
+                                        </div>
+                                    </div>
+                            `;
+                        });
+
+                        cardHTML += `
+                                </div>
+                            </div>
+                        `;
+                        queueContainer.innerHTML += cardHTML;
+                    }
+                    }
+
+                const stockBody = document.getElementById('fullStockTable');
+                    stockBody.innerHTML = '';
+                    
+                    // Force JavaScript to sort the widths numerically (lowest to highest)
+                    const sortedWidths = Object.keys(fullStock).sort((a, b) => parseFloat(a) - parseFloat(b));
+                    
+                    sortedWidths.forEach(width => {
+                        const qty = fullStock[width];
+                        stockBody.innerHTML += `
+                            <tr>
+                                <td><strong>${width} ft</strong></td>
+                                <td>${qty} Pieces</td>
+                                <td>
+                                    <div class="stock-controls">
+                                        <button class="btn-circle" onclick="window.adjustStock('${width}', -1)">-</button>
+                                        <button class="btn-circle" onclick="window.adjustStock('${width}', 1)">+</button>
+                                    </div>
+                                </td>
+                            </tr>`;
+                    });
+
+            const offcutBody = document.getElementById('offcutTable');
+                    offcutBody.innerHTML = '';
+                    let sortedOffcuts = [...offcuts].sort((a, b) => a.width - b.width || a.length - b.length);
+                    
+                    if(sortedOffcuts.length === 0) {
+                        offcutBody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#999; padding: 15px;">No offcuts available.</td></tr>';
+                    } else {
+                        sortedOffcuts.forEach(item => {
+                            const offcutInches = Math.round(parseFloat(item.length) * 12);
+                            
+                            offcutBody.innerHTML += `
+                                <tr>
+                                    <td><span style="color:var(--navy); font-weight:bold;">${item.id}</span></td>
+                                    <td>${item.width} ft</td>
+                                    <td>
+                                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                                            <div>
+                                                <span class="offcut-tag" style="background: #e2e8f0; color: #475569; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 13px;">${item.length} ft</span>
+                                                <span style="color: #64748b; font-size: 13px; font-weight: bold; margin-left: 8px;">(${offcutInches} in)</span>
+                                            </div>
+                                            <button onclick="window.deleteOffcut('${item.id}')" style="background: white; border: 1px solid #fca5a5; color: #ef4444; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 14px; margin-left: 10px;" title="Delete Scrap Piece">
                                                 🗑️
                                             </button>
                                         </div>
-                                        
-                                    </div>
-                                </div>
-                        `;
+                                    </td>
+                                </tr>`;
+                        });
+                    }
+
+            const logBody = document.getElementById('logTable');
+                logBody.innerHTML = '';
+                let reversedLogs = [...cutLogs].reverse().slice(0, 15); 
+                if(reversedLogs.length === 0) {
+                    logBody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#999; padding: 15px;">No cuts logged yet.</td></tr>';
+                } else {
+                    reversedLogs.forEach(log => {
+                        // Convert log length from decimal feet back to exact inches for tallying
+                        const logLengthInches = Math.round(parseFloat(log.length) * 12);
+                        
+                        logBody.innerHTML += `
+                            <tr>
+                                <td style="font-size:12px; color:#666; white-space: nowrap; padding-right: 20px;">${log.time}</td>
+                                <td style="white-space: nowrap; padding-right: 20px;"><strong>${log.customer || 'Walk-in'}</strong></td>
+                                <td style="white-space: nowrap; padding-right: 20px;">
+                                    <strong style="color: #cc0000; font-size: 15px;">${log.width} ft × ${logLengthInches} in</strong>
+                                    <div style="font-size: 12px; color: #888; margin-top: 2px;">(${log.width} x ${log.length} ft)</div>
+                                </td>
+                                <td style="white-space: nowrap; padding-right: 20px;">${log.source}</td>
+                                <td style="white-space: nowrap; padding-right: 20px;">${log.leftover}</td>
+                                <td style="white-space: nowrap;"><button class="btn-delete" onclick="window.deleteCut('${log.time}')">🗑️ Delete</button></td>
+                            </tr>`;
                     });
-
-                    cardHTML += `
-                            </div>
-                        </div>
-                    `;
-                    queueContainer.innerHTML += cardHTML;
                 }
+            }
+
+            function generateId() {
+                let maxId = 0;
+                offcuts.forEach(o => {
+                    let num = parseInt(o.id.replace('J-', ''));
+                    if (num > maxId) maxId = num;
+                });
+                return `J-${(maxId + 1).toString().padStart(3, '0')}`;
+            }
+
+            function showNotification(message, isError = false) {
+                const toast = document.getElementById('toast');
+                toast.innerHTML = message;
+                if (isError) toast.classList.add('error');
+                else toast.classList.remove('error');
+                
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 6000);
+            }
+
+            window.adjustStock = async function(width, amount) {
+                if (fullStock[width] + amount >= 0) {
+                    fullStock[width] += amount;
+                    await saveToServer();
                 }
-
-            // ... (keep the rest of the renderUI function exactly as it was, starting from const stockBody = document.getElementById('fullStockTable');)
-            const stockBody = document.getElementById('fullStockTable');
-            stockBody.innerHTML = '';
-            for (const [width, qty] of Object.entries(fullStock)) {
-                stockBody.innerHTML += `
-                    <tr>
-                        <td><strong>${width} ft</strong></td>
-                        <td>${qty} Pieces</td>
-                        <td>
-                            <div class="stock-controls">
-                                <button class="btn-circle" onclick="window.adjustStock('${width}', -1)">-</button>
-                                <button class="btn-circle" onclick="window.adjustStock('${width}', 1)">+</button>
-                            </div>
-                        </td>
-                    </tr>`;
-            }
-
-           const offcutBody = document.getElementById('offcutTable');
-            offcutBody.innerHTML = '';
-            let sortedOffcuts = [...offcuts].sort((a, b) => a.width - b.width || a.length - b.length);
-            if(sortedOffcuts.length === 0) {
-                offcutBody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#999;">No offcuts available.</td></tr>';
-            } else {
-                sortedOffcuts.forEach(item => {
-                    // CALCULATE INCHES FOR THE OFFCUT DISPLAY
-                    const offcutInches = Math.round(parseFloat(item.length) * 12);
-                    
-                    offcutBody.innerHTML += `
-                        <tr>
-                            <td><span style="color:var(--navy); font-weight:bold;">${item.id}</span></td>
-                            <td>${item.width} ft</td>
-                            <td>
-                                <span class="offcut-tag">${item.length} ft</span>
-                                <span style="color: #64748b; font-size: 13px; font-weight: bold; margin-left: 8px;">(${offcutInches} inches)</span>
-                            </td>
-                        </tr>`;
-                });
-            }
-
-          const logBody = document.getElementById('logTable');
-            logBody.innerHTML = '';
-            let reversedLogs = [...cutLogs].reverse().slice(0, 15); 
-            if(reversedLogs.length === 0) {
-                logBody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#999; padding: 15px;">No cuts logged yet.</td></tr>';
-            } else {
-                reversedLogs.forEach(log => {
-                    // Convert log length from decimal feet back to exact inches for tallying
-                    const logLengthInches = Math.round(parseFloat(log.length) * 12);
-                    
-                    logBody.innerHTML += `
-                        <tr>
-                            <td style="font-size:12px; color:#666; white-space: nowrap; padding-right: 20px;">${log.time}</td>
-                            <td style="white-space: nowrap; padding-right: 20px;"><strong>${log.customer || 'Walk-in'}</strong></td>
-                            <td style="white-space: nowrap; padding-right: 20px;">
-                                <strong style="color: #cc0000; font-size: 15px;">${log.width} ft × ${logLengthInches} in</strong>
-                                <div style="font-size: 12px; color: #888; margin-top: 2px;">(${log.width} x ${log.length} ft)</div>
-                            </td>
-                            <td style="white-space: nowrap; padding-right: 20px;">${log.source}</td>
-                            <td style="white-space: nowrap; padding-right: 20px;">${log.leftover}</td>
-                            <td style="white-space: nowrap;"><button class="btn-delete" onclick="window.deleteCut('${log.time}')">🗑️ Delete</button></td>
-                        </tr>`;
-                });
-            }
-        }
-
-        function generateId() {
-            let maxId = 0;
-            offcuts.forEach(o => {
-                let num = parseInt(o.id.replace('J-', ''));
-                if (num > maxId) maxId = num;
-            });
-            return `J-${(maxId + 1).toString().padStart(3, '0')}`;
-        }
-
-        function showNotification(message, isError = false) {
-            const toast = document.getElementById('toast');
-            toast.innerHTML = message;
-            if (isError) toast.classList.add('error');
-            else toast.classList.remove('error');
-            
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 6000);
-        }
-
-        window.adjustStock = async function(width, amount) {
-            if (fullStock[width] + amount >= 0) {
-                fullStock[width] += amount;
-                await saveToServer();
-            }
-        };
-// --- CART SYSTEM FUNCTIONS ---
-        window.addSizeToCart = function() {
+            };
+    // --- CART SYSTEM FUNCTIONS ---
+          window.addSizeToCart = function() {
             const width = document.getElementById('reqWidth').value;
-            const length = parseFloat(document.getElementById('reqLength').value);
+            const valInput = document.getElementById('reqLengthValue');
+            const val = parseFloat(valInput.value);
+            const unit = document.getElementById('reqLengthUnit').value;
 
-            if (isNaN(length) || length <= 0) {
+            if (isNaN(val) || val <= 0) {
                 showNotification("<strong>Error:</strong> Please enter a valid length.", true);
                 return;
             }
 
-            currentCustomerCart.push({ width: width, length: length });
-            document.getElementById('reqLength').value = ''; // Clear length for next entry
+            // Convert to decimal feet for backend storage
+            const lengthFt = unit === 'in' ? parseFloat((val / 12).toFixed(2)) : val;
+
+            currentCustomerCart.push({ width: width, length: lengthFt });
+            
+            // CLEAN UP: Clear the length box and reset the Live Area
+            valInput.value = ''; 
+            document.getElementById('liveSqFt').innerText = '0.00';
+            
             window.renderCart();
         };
 
-       // --- RENDERS THE SHOP CART WITH GRAND TOTAL ---
-        window.renderCart = function() {
-            const cartDiv = document.getElementById('customerCart');
-            
-            if (currentCustomerCart.length === 0) {
-                cartDiv.style.display = 'none';
-                return;
-            }
-            
-            cartDiv.style.display = 'block';
-            let grandTotalSqFt = 0; // Start at zero
-
-            // Create the header with the Grand Total placeholder
-            let html = `
-                <div style="border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-                    <h4 style="margin: 0; color: var(--navy);">🛒 Current List</h4>
-                    <strong style="color: #28a745; font-size: 16px;" id="cartGrandTotal">0.00 Sq Ft Total</strong>
-                </div>
-                <ul style="list-style: none; padding: 0; margin: 0;">
-            `;
-            
-            // Loop through all items, add them to the list, and add up the total
-            currentCustomerCart.forEach((item, index) => {
-                let itemSqFt = parseFloat(item.width) * parseFloat(item.length);
-                grandTotalSqFt += itemSqFt; // Add to grand total
+        // --- RENDERS THE SHOP CART WITH GRAND TOTAL ---
+            window.renderCart = function() {
+                const cartDiv = document.getElementById('customerCart');
                 
-                html += `
-                    <li style="padding: 8px 0; border-bottom: 1px dashed #ddd; display: flex; justify-content: space-between; font-size: 15px;">
-                        <span>${item.width} x ${item.length} ft</span>
-                        <strong style="color: #555;">${itemSqFt.toFixed(2)} Sq Ft</strong>
-                    </li>`;
-            });
-            
-            html += `</ul>`;
-            cartDiv.innerHTML = html;
-            
-            // Inject the final calculated grand total into the header
-            document.getElementById('cartGrandTotal').innerText = `${grandTotalSqFt.toFixed(2)} Sq Ft Total`;
-        };
-        window.removeCartItem = function(index) {
-            currentCustomerCart.splice(index, 1);
-            window.renderCart();
-        };
-      // --- SENDS ORDER TO GODOWN (Handles Single & Multiple Sizes) ---
-        window.processSmartCut = async function() {
-            const lengthInput = document.getElementById('reqLength').value;
-            const length = parseFloat(lengthInput);
+                if (currentCustomerCart.length === 0) {
+                    cartDiv.style.display = 'none';
+                    return;
+                }
+                
+                cartDiv.style.display = 'block';
+                let grandTotalSqFt = 0; 
+
+                // 1. Foolproof Header: Added flex-wrap, white-space: nowrap, and flex-shrink to prevent text from ever crushing together
+                let html = `
+                    <div style="border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 12px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px;">
+                        <h4 style="margin: 0; color: var(--navy); white-space: nowrap; flex-shrink: 0;">
+                            🛒 Current List
+                        </h4>
+                        <strong style="color: #10b981; font-size: 15px; margin-left: auto; text-align: right; flex-shrink: 0;" id="cartGrandTotal">0.00 Sq Ft Total</strong>
+                    </div>
+                    <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px;">
+                `;
+                
+                currentCustomerCart.forEach((item, index) => {
+                    let itemSqFt = parseFloat(item.width) * parseFloat(item.length);
+                    grandTotalSqFt += itemSqFt; 
+                    
+                    let displayInches = Math.round(item.length * 12);
+                    
+                    // 2. Upgraded Item Row
+                    html += `
+                        <li style="padding-bottom: 10px; border-bottom: 1px dashed #e2e8f0; display: flex; justify-content: space-between; align-items: center; font-size: 15px;">
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span style="font-weight: bold; color: var(--navy);">${item.width} ft</span>
+                                <span style="color: #94a3b8; font-size: 13px;">✕</span>
+                                <span style="font-weight: bold; color: #ef4444;">${displayInches} in</span>
+                            </div>
+                            <strong style="color: #64748b;">${itemSqFt.toFixed(2)} Sq Ft</strong>
+                        </li>`;
+                });
+                
+                html += `</ul>`;
+                cartDiv.innerHTML = html;
+                
+                // Inject the final calculated grand total into the header
+                document.getElementById('cartGrandTotal').innerText = `${grandTotalSqFt.toFixed(2)} Sq Ft Total`;
+            };
+
+            window.removeCartItem = function(index) {
+                currentCustomerCart.splice(index, 1);
+                window.renderCart();
+            };
+        // --- SENDS ORDER TO GODOWN (Handles Single & Multiple Sizes) ---
+           window.processSmartCut = async function() {
+            const valInput = document.getElementById('reqLengthValue');
+            const val = parseFloat(valInput.value);
+            const unit = document.getElementById('reqLengthUnit').value;
             const width = document.getElementById('reqWidth').value;
 
-            // 1. If there is a size typed in the box, automatically add it to our list first
-            if (!isNaN(length) && length > 0) {
-                currentCustomerCart.push({ width: width, length: length });
+            // 1. If there is a size typed in the box, convert and add it
+            if (!isNaN(val) && val > 0) {
+                const lengthFt = unit === 'in' ? parseFloat((val / 12).toFixed(2)) : val;
+                currentCustomerCart.push({ width: width, length: lengthFt });
             }
 
             // 2. Check if we have anything to send at all
@@ -726,8 +850,8 @@
                 return;
             }
 
-            const customerInput = document.getElementById('custName').value;
-            const customer = customerInput ? customerInput : "Walk-in Customer";
+            const customerInput = document.getElementById('custName');
+            const customer = customerInput.value ? customerInput.value : "Walk-in Customer";
             let summaryText = "";
 
             // 3. Loop through everything and add to Godown Queue
@@ -737,10 +861,13 @@
                     time: new Date().toLocaleString(),
                     customer: customer,
                     reqWidth: item.width,
-                    reqLength: item.length
+                    reqLength: item.length // Storing as decimal feet for backend
                 };
                 activeQueue.push(queueEntry);
-                summaryText += `${item.width}x${item.length}ft, `;
+                
+                // Quick inches conversion for the OneSignal text notification
+                let notificationInches = Math.round(item.length * 12);
+                summaryText += `${item.width}ft x ${notificationInches}in, `;
             });
 
             // 4. Save to Firebase
@@ -748,14 +875,15 @@
             
             // 5. Clean up the screen for the next customer
             const totalSent = currentCustomerCart.length;
-            currentCustomerCart = []; // Empty the cart
-            document.getElementById('custName').value = ''; // Clear name
-            document.getElementById('reqLength').value = ''; // Clear length
-            window.renderCart(); // Hide the cart box
+            currentCustomerCart = []; 
+            customerInput.value = ''; 
+            
+            // CLEAN UP: Clear the length box and reset the Live Area
+            valInput.value = ''; 
+            document.getElementById('liveSqFt').innerText = '0.00';
+            
+            window.renderCart(); 
             showNotification(`Sent ${totalSent} requirement(s) to Godown screen!`, false);
-            document.getElementById('liveSqFt').innerText = "0.00"; // Reset the live calculator
-            document.getElementById('reqLength').value = ''; // Clear feet length
-            document.getElementById('reqLengthInches').value = ''; // <--- ADD THIS LINE
             
             // 6. Trigger OneSignal Notification
             const oneSignalAppId = "f3b6b4a5-2fbd-417f-b990-14fa64d6d350";
@@ -781,133 +909,201 @@
                 console.error("Error triggering OneSignal:", error);
             }
         };
-        // --- DELETE / UNDO FUNCTION (CUSTOM MODAL) ---
-        let logToDelete = null; 
+            // --- DELETE / UNDO FUNCTION (CUSTOM MODAL) ---
+            let logToDelete = null; 
 
-        window.deleteCut = function(logTime) {
-            logToDelete = logTime; 
-            document.getElementById('deleteModal').style.display = 'flex'; 
-        };
-
-        window.closeModal = function() {
-            document.getElementById('deleteModal').style.display = 'none'; 
-            logToDelete = null; 
-        };
-
-        window.confirmDeleteAction = async function() {
-            if (!logToDelete) return;
-
-            const logIndex = cutLogs.findIndex(log => log.time === logToDelete);
-            
-            if (logIndex !== -1) {
-                cutLogs.splice(logIndex, 1);
-                await saveToServer(); 
-                showNotification("Log entry deleted successfully.", false);
-            }
-            
-            window.closeModal(); 
-        };
-
-       // --- GODOWN CUT PROCESSING ---
-        window.processGodownCut = async function(orderId) {
-            const index = activeQueue.findIndex(o => o.id === orderId);
-            if (index === -1) return;
-            const order = activeQueue[index];
-
-            // 1. Get the worker's input in inches, then convert it back to feet for the database
-            const actualWidth = document.getElementById(`godownWidth_${orderId}`).value;
-            const actualLengthInches = parseFloat(document.getElementById(`godownLengthInches_${orderId}`).value);
-            const actualLengthFeet = parseFloat((actualLengthInches / 12).toFixed(2));
-
-            // BUG FIX: Updated to check 'actualLengthFeet' instead of the old undefined variable
-            if (isNaN(actualLengthFeet) || actualLengthFeet <= 0 || actualLengthFeet > 12) {
-                showNotification("<strong>Error:</strong> Godown entered an invalid cut length.", true);
-                return;
-            }
-
-            let logEntry = {
-                time: new Date().toLocaleString(),
-                customer: order.customer,
-                width: actualWidth,
-                length: actualLengthFeet,
-                source: "",
-                leftover: ""
+            window.deleteCut = function(logTime) {
+                logToDelete = logTime; 
+                document.getElementById('deleteModal').style.display = 'flex'; 
             };
 
-            // SMART DEDUCTION LOGIC BASED ON ACTUAL SIZE
-            let validOffcuts = offcuts.filter(o => o.width === actualWidth && o.length >= actualLengthFeet);
-            
-            if (validOffcuts.length > 0) {
-                // System finds the best offcut for the final size
-                validOffcuts.sort((a, b) => a.length - b.length);
-                let bestPiece = validOffcuts[0];
-                bestPiece.length = parseFloat((bestPiece.length - actualLengthFeet).toFixed(1));
+            window.closeModal = function() {
+                document.getElementById('deleteModal').style.display = 'none'; 
+                logToDelete = null; 
+            };
+
+            window.confirmDeleteAction = async function() {
+                if (!logToDelete) return;
+
+                const logIndex = cutLogs.findIndex(log => log.time === logToDelete);
                 
-                // Convert the leftover feet back to inches for the Log text
-                let leftoverInches = Math.round(bestPiece.length * 12);
-                
-                logEntry.source = `Offcut ${bestPiece.id}`;
-                logEntry.leftover = `${bestPiece.length} ft (${leftoverInches} in)`;
-            } 
-            else if (fullStock[actualWidth] > 0) {
-                // System breaks a new full sheet
-                fullStock[actualWidth] -= 1;
-                let remainder = parseFloat((12.0 - actualLengthFeet).toFixed(1));
-                
-                if (remainder > 0) {
-                    let newId = generateId();
-                    offcuts.push({ id: newId, width: actualWidth, length: remainder });
-                    
-                    // Convert the remainder feet back to inches for the Log text
-                    let remainderInches = Math.round(remainder * 12);
-                    
-                    logEntry.source = `New 12ft Piece`;
-                    logEntry.leftover = `Saved ${remainder}ft (${remainderInches} in) as ${newId}`;
-                } else {
-                    logEntry.source = `New 12ft Piece`;
-                    logEntry.leftover = `None`;
+                if (logIndex !== -1) {
+                    cutLogs.splice(logIndex, 1);
+                    await saveToServer(); 
+                    showNotification("Log entry deleted successfully.", false);
                 }
-            } else {
-                showNotification(`<strong>Out of Stock!</strong> Cannot cut ${actualWidth}ft. Need a new 12ft sheet.`, true);
+                
+                window.closeModal(); 
+            };
+// --- ADD MANUAL SCRAP / OFFCUT ---
+        window.addManualScrap = async function() {
+            const width = document.getElementById('manualScrapWidth').value;
+            const inchesInput = document.getElementById('manualScrapInches').value;
+            const lengthInches = parseFloat(inchesInput);
+
+            // 1. Validate the input
+            if (isNaN(lengthInches) || lengthInches <= 0) {
+                showNotification("<strong>Error:</strong> Please enter a valid scrap length in inches.", true);
                 return;
             }
 
-            // LOG IT AND REMOVE FROM QUEUE
-            cutLogs.push(logEntry);
-            activeQueue.splice(index, 1);
-            
-            // SAVE TO FIREBASE
+            // 2. Convert inches to decimal feet for the database math
+            const lengthFeet = parseFloat((lengthInches / 12).toFixed(2));
+
+            // 3. Generate a new official J- ID for this piece
+            const newId = generateId();
+
+            // 4. Add it to the offcuts array
+            offcuts.push({ 
+                id: newId, 
+                width: width, 
+                length: lengthFeet 
+            });
+
+            // 5. Save to Firebase and clear the input box
             await saveToServer();
-            showNotification("Cut processed and inventory updated!", false);
-        };
-       // --- GODOWN QUEUE DELETION (CUSTOM MODAL) ---
-        let godownOrderToDelete = null; // Memory for which item to delete
-
-        // 1. Opens the professional modal
-        window.deleteGodownOrder = function(orderId) {
-            godownOrderToDelete = orderId; 
-            document.getElementById('godownDeleteModal').style.display = 'flex'; 
+            document.getElementById('manualScrapInches').value = '';
+            showNotification(`Added Scrap ${newId} (${width}ft × ${lengthInches}in) to inventory!`, false);
         };
 
-        // 2. Closes the modal if they click Cancel
-        window.closeGodownModal = function() {
-            document.getElementById('godownDeleteModal').style.display = 'none'; 
-            godownOrderToDelete = null; 
-        };
+        // --- GODOWN CUT PROCESSING ---
+            window.processGodownCut = async function(orderId) {
+                const index = activeQueue.findIndex(o => o.id === orderId);
+                if (index === -1) return;
+                const order = activeQueue[index];
 
-        // 3. Actually deletes the item if they click "Yes, Delete"
-        window.confirmGodownDeleteAction = async function() {
-            if (!godownOrderToDelete) return;
+                // 1. Get the worker's input in inches, then convert it back to feet for the database
+                const actualWidth = document.getElementById(`godownWidth_${orderId}`).value;
+                const actualLengthInches = parseFloat(document.getElementById(`godownLengthInches_${orderId}`).value);
+                const actualLengthFeet = parseFloat((actualLengthInches / 12).toFixed(2));
 
-            const index = activeQueue.findIndex(o => o.id === godownOrderToDelete);
-            if (index !== -1) {
+                // BUG FIX: Updated to check 'actualLengthFeet' instead of the old undefined variable
+                if (isNaN(actualLengthFeet) || actualLengthFeet <= 0 || actualLengthFeet > 12) {
+                    showNotification("<strong>Error:</strong> Godown entered an invalid cut length.", true);
+                    return;
+                }
+
+                let logEntry = {
+                    time: new Date().toLocaleString(),
+                    customer: order.customer,
+                    width: actualWidth,
+                    length: actualLengthFeet,
+                    source: "",
+                    leftover: ""
+                };
+
+                // SMART DEDUCTION LOGIC BASED ON ACTUAL SIZE
+                    
+                    // 1. Filter offcuts by comparing EXACT INCHES to avoid decimal math glitches
+                    let validOffcuts = offcuts.filter(o => {
+                        let offcutInches = Math.round(parseFloat(o.length) * 12);
+                        return o.width === actualWidth && offcutInches >= actualLengthInches;
+                    });
+                    
+                    if (validOffcuts.length > 0) {
+                        // System finds the best offcut for the final size
+                        validOffcuts.sort((a, b) => parseFloat(a.length) - parseFloat(b.length));
+                        let bestPiece = validOffcuts[0];
+                        
+                        // 2. Do the deduction math in pure INCHES
+                        let originalInches = Math.round(parseFloat(bestPiece.length) * 12);
+                        let leftoverInches = originalInches - actualLengthInches;
+                        
+                        // 3. Save the exact new leftover back as feet for the database
+                        bestPiece.length = parseFloat((leftoverInches / 12).toFixed(2));
+                        
+                        logEntry.source = `Offcut ${bestPiece.id}`;
+                        logEntry.leftover = `${bestPiece.length} ft (${leftoverInches} in)`;
+                    } 
+                    else if (fullStock[actualWidth] > 0) {
+                        // System breaks a new full sheet
+                        fullStock[actualWidth] -= 1;
+                        
+                        // Break the new sheet using pure inches (144 inches = 12 ft)
+                        let remainderInches = 144 - actualLengthInches;
+                        let remainderFeet = parseFloat((remainderInches / 12).toFixed(2));
+                        
+                        if (remainderInches > 0) {
+                            let newId = generateId();
+                            offcuts.push({ id: newId, width: actualWidth, length: remainderFeet });
+                            
+                            logEntry.source = `New 12ft Piece`;
+                            logEntry.leftover = `Saved ${remainderFeet}ft (${remainderInches} in) as ${newId}`;
+                        } else {
+                            logEntry.source = `New 12ft Piece`;
+                            logEntry.leftover = `None`;
+                        }
+                    } else {
+                        showNotification(`<strong>Out of Stock!</strong> Cannot cut ${actualWidth}ft. Need a new 12ft sheet.`, true);
+                        return;
+                    }
+
+                // LOG IT AND REMOVE FROM QUEUE
+                cutLogs.push(logEntry);
                 activeQueue.splice(index, 1);
-                await saveToServer(); 
-                showNotification("Requirement deleted from godown queue.", false);
-            }
-            
-            window.closeGodownModal(); // Hide the modal after processing
-        };
-    </script>
-</body>
-</html>
+                
+                // SAVE TO FIREBASE
+                await saveToServer();
+                showNotification("Cut processed and inventory updated!", false);
+            };
+        // --- GODOWN QUEUE DELETION (CUSTOM MODAL) ---
+            let godownOrderToDelete = null; // Memory for which item to delete
+
+            // 1. Opens the professional modal
+            window.deleteGodownOrder = function(orderId) {
+                godownOrderToDelete = orderId; 
+                document.getElementById('godownDeleteModal').style.display = 'flex'; 
+            };
+
+            // 2. Closes the modal if they click Cancel
+            window.closeGodownModal = function() {
+                document.getElementById('godownDeleteModal').style.display = 'none'; 
+                godownOrderToDelete = null; 
+            };
+
+            // 3. Actually deletes the item if they click "Yes, Delete"
+            window.confirmGodownDeleteAction = async function() {
+                if (!godownOrderToDelete) return;
+
+                const index = activeQueue.findIndex(o => o.id === godownOrderToDelete);
+                if (index !== -1) {
+                    activeQueue.splice(index, 1);
+                    await saveToServer();
+                    showNotification("Requirement deleted from godown queue.", false);
+                }
+                
+                window.closeGodownModal(); // Hide the modal after processing
+            };
+          // --- DELETE OFFCUT / SCRAP PIECE (CUSTOM MODAL) ---
+            let offcutToDelete = null; // Memory for which piece to delete
+
+            // 1. Opens the professional modal and sets the text
+            window.deleteOffcut = function(offcutId) {
+                offcutToDelete = offcutId; 
+                document.getElementById('offcutDeleteIdText').innerText = offcutId; // Put the ID in the warning text
+                document.getElementById('offcutDeleteModal').style.display = 'flex'; // Show the modal
+            };
+
+            // 2. Closes the modal if they click Cancel
+            window.closeOffcutModal = function() {
+                document.getElementById('offcutDeleteModal').style.display = 'none'; 
+                offcutToDelete = null; 
+            };
+
+            // 3. Actually deletes the item if they click "Yes, Delete"
+            window.confirmOffcutDelete = async function() {
+                if (!offcutToDelete) return;
+
+                const index = offcuts.findIndex(o => o.id === offcutToDelete);
+                
+                if (index !== -1) {
+                    offcuts.splice(index, 1); // Remove from array
+                    await saveToServer(); // Save to Firebase
+                    showNotification(`Scrap ${offcutToDelete} removed from inventory.`, false);
+                }
+                
+                window.closeOffcutModal(); // Hide the modal after processing
+            };
+        </script>
+    </body>
+    </html>
