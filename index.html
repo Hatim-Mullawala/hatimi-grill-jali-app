@@ -349,17 +349,21 @@
         </select>
     </div>
 
-    <!-- Single Length Box with Unit Selector -->
-    <div style="flex: 1.5; min-width: 180px;">
-        <label style="font-weight: bold; color: var(--navy); font-size: 13px; display: block; margin-bottom: 5px;">Length Needed:</label>
-        <div style="display: flex; height: 45px; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; box-sizing: border-box; background: white;">
-            <input type="number" id="reqLengthValue" placeholder="0.0" step="1" style="flex: 1; width: 100%; height: 100%; padding: 10px 15px; border: none; font-size: 16px; font-weight: bold; outline: none; box-sizing: border-box;">
-            <select id="reqLengthUnit" style="background: #f8fafc; border: none; border-left: 1px solid #cbd5e1; padding: 0 10px; font-weight: bold; font-size: 15px; color: var(--navy); outline: none; cursor: pointer;">
-                <option value="in" selected>in</option>
-                <option value="ft">ft</option>
-            </select>
-        </div>
+  <!-- Wrapper Div: Removed margin-bottom so it sits perfectly flush with the other inputs -->
+<div style="flex: 1 1 180px;">
+    <label style="font-weight: bold; font-size: 13px; color: var(--navy); display: block; margin-bottom: 5px;">Length Needed:</label>
+    
+    <div style="display: flex; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; height: 45px; width: 100%;">
+        
+        <input type="number" id="reqLengthValue" placeholder="e.g. 22" style="flex: 1; min-width: 70px; border: none; padding: 10px; font-size: 16px; outline: none;" step="0.1">
+        
+        <select id="reqLengthUnit" style="background: #f8fafc; border: none; border-left: 1px solid #cbd5e1; padding: 0 12px; font-weight: bold; color: var(--navy); outline: none; cursor: pointer;">
+            <option value="in">in</option>
+            <option value="ft">ft</option>
+        </select>
+        
     </div>
+</div>
 
     <!-- Live Area -->
     <div style="flex: 1; min-width: 120px;">
@@ -686,17 +690,31 @@
                             const offcutInches = Math.round(parseFloat(item.length) * 12);
                             
                             offcutBody.innerHTML += `
-                                <tr>
-                                    <td><span style="color:var(--navy); font-weight:bold;">${item.id}</span></td>
-                                    <td>${item.width} ft</td>
-                                    <td>
-                                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                                            <div>
-                                                <span class="offcut-tag" style="background: #e2e8f0; color: #475569; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 13px;">${item.length} ft</span>
-                                                <span style="color: #64748b; font-size: 13px; font-weight: bold; margin-left: 8px;">(${offcutInches} in)</span>
-                                            </div>
-                                            <button onclick="window.deleteOffcut('${item.id}')" style="background: white; border: 1px solid #fca5a5; color: #ef4444; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 14px; margin-left: 10px;" title="Delete Scrap Piece">
-                                                🗑️
+                                <tr id="row-${item.id}" 
+                                    ontouchstart="window.startLongPress(event, '${item.id}')" 
+                                    ontouchend="window.cancelLongPress()" 
+                                    ontouchmove="window.cancelLongPress()"
+                                    onmousedown="window.startLongPress(event, '${item.id}')"
+                                    onmouseup="window.cancelLongPress()"
+                                    onmouseleave="window.cancelLongPress()"
+                                    style="position: relative; transition: background 0.2s;">
+                                    
+                                    <td style="padding: 12px 8px; vertical-align: middle;"><span style="color:var(--navy); font-weight:bold;">${item.id}</span></td>
+                                    <td style="padding: 12px 8px; vertical-align: middle;">${item.width} ft</td>
+                                    <td style="padding: 12px 8px; vertical-align: middle;">
+                                        <!-- Stacked text so it doesn't look messy on mobile -->
+                                        <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-start;">
+                                            <span style="background: #e2e8f0; color: #475569; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 13px;">${item.length} ft</span>
+                                            <span style="color: #64748b; font-size: 12px; font-weight: bold; padding-left: 4px;">(${offcutInches} in)</span>
+                                        </div>
+                                        
+                                        <!-- HIDDEN DELETE OVERLAY (Revealed on Long Press) -->
+                                        <div id="delete-overlay-${item.id}" style="display: none; position: absolute; top: 0; right: 0; height: 100%; width: 100%; padding: 0 10px; background: rgba(254, 242, 242, 0.95); align-items: center; justify-content: flex-end; border-radius: 4px; box-shadow: inset 4px 0 10px rgba(0,0,0,0.05);">
+                                            <button onclick="window.deleteOffcut('${item.id}')" style="background: #ef4444; color: white; border: none; border-radius: 6px; padding: 8px 16px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3); cursor: pointer;">
+                                                🗑️ Delete
+                                            </button>
+                                            <button onclick="window.hideDelete('${item.id}', event)" style="background: transparent; color: #64748b; border: none; font-size: 16px; margin-left: 15px; padding: 10px; cursor: pointer;">
+                                                ✖
                                             </button>
                                         </div>
                                     </td>
@@ -1103,6 +1121,42 @@
                 }
                 
                 window.closeOffcutModal(); // Hide the modal after processing
+            };
+            // --- LONG PRESS LOGIC FOR MOBILE ---
+            let pressTimer;
+
+            window.startLongPress = function(e, id) {
+                // If they hold their finger down for 600ms, trigger the menu
+                pressTimer = setTimeout(() => {
+                    // Trigger a tiny phone vibration if the device supports it
+                    if (navigator.vibrate) navigator.vibrate(50);
+                    
+                    // Close any other open overlays first
+                    document.querySelectorAll('[id^="delete-overlay-"]').forEach(el => el.style.display = 'none');
+                    document.querySelectorAll('[id^="row-"]').forEach(el => el.style.background = 'transparent');
+                    
+                    // Show the delete button for THIS specific row
+                    const overlay = document.getElementById(`delete-overlay-${id}`);
+                    if(overlay) {
+                        overlay.style.display = 'flex';
+                        document.getElementById(`row-${id}`).style.background = '#fef2f2'; // light red highlight
+                    }
+                }, 600); 
+            };
+
+            window.cancelLongPress = function() {
+                // If they lift their finger or scroll before 600ms, cancel the timer
+                clearTimeout(pressTimer);
+            };
+
+            window.hideDelete = function(id, e) {
+                // The "X" button to hide the menu again
+                if(e) e.stopPropagation();
+                const overlay = document.getElementById(`delete-overlay-${id}`);
+                if(overlay) {
+                    overlay.style.display = 'none';
+                    document.getElementById(`row-${id}`).style.background = 'transparent';
+                }
             };
         </script>
     </body>
