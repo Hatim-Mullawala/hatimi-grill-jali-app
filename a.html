@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="manifest" href="manifest.json">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hatimi Hardware - Jali Organizer</title>
+    <style>
+        :root {
+            --navy: #0A192F;
+            --gold: #D4AF37;
+            --white: #FFFFFF;
+            --light-gray: #F4F7F6;
+            --text-main: #333333;
+            --success: #155724;
+            --success-bg: #d4edda;
+            --success-border: #c3e6cb;
+            --error: #721c24;
+            --error-bg: #f8d7da;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--light-gray);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            background-color: var(--navy);
+            color: var(--white);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border-bottom: 5px solid var(--gold);
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .header h1 { margin: 0; font-size: 26px; letter-spacing: 1px; text-transform: uppercase;}
+        
+        .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .panel { background: var(--white); padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-top: 3px solid var(--navy); }
+        .panel h3 { color: var(--navy); border-bottom: 2px solid var(--light-gray); padding-bottom: 10px; margin-top: 0; }
+        .smart-cutter { grid-column: 1 / -1; border: 2px solid var(--gold); }
+        .input-group { display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end; margin: 15px 0; }
+        .input-box { display: flex; flex-direction: column; }
+        .input-box label { font-weight: bold; margin-bottom: 5px; font-size: 14px; color: var(--navy); }
+        select, input { padding: 10px; font-size: 15px; border: 1px solid #ccc; border-radius: 6px; width: 160px; }
+        .btn-large { background-color: var(--navy); color: var(--gold); font-size: 16px; font-weight: bold; padding: 11px 25px; border: none; border-radius: 6px; cursor: pointer; transition: 0.3s; }
+        .btn-large:hover { background-color: #112A4F; color: var(--white); }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #eee; }
+        th { color: #888; font-weight: bold; font-size: 13px; text-transform: uppercase; background: #fdfdfd;}
+        .stock-controls { display: flex; align-items: center; gap: 8px; }
+        .btn-circle { background: var(--light-gray); border: 1px solid #ccc; color: var(--navy); border-radius: 50%; width: 28px; height: 28px; font-weight: bold; cursor: pointer; }
+        .btn-circle:hover { background: var(--gold); color: var(--navy); border-color: var(--gold); }
+        .offcut-tag { background: #fff8e1; color: #b08d00; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 14px; border: 1px solid #ffe57f; }
+        
+        #toast { visibility: hidden; min-width: 300px; background-color: var(--success-bg); color: var(--success); border: 1px solid var(--success-border); text-align: left; border-radius: 8px; padding: 16px 20px; position: fixed; z-index: 1000; right: 30px; top: 30px; font-size: 15px; box-shadow: 0 6px 15px rgba(0,0,0,0.15); opacity: 0; transition: opacity 0.4s, top 0.4s; line-height: 1.5; }
+        #toast.show { visibility: visible; opacity: 1; top: 50px; }
+        #toast.error { background-color: var(--error-bg); color: var(--error); border-color: #f5c6cb; }
+  /* --- MOBILE RESPONSIVENESS --- */
+        .panel {
+            overflow-x: auto; /* Allows tables to scroll left/right on small screens */
+        }
+
+        @media (max-width: 768px) {
+            .grid-layout { 
+                grid-template-columns: 1fr; /* Stacks panels on top of each other */
+            }
+            .input-group { 
+                flex-direction: column; 
+                align-items: stretch; 
+            }
+            .input-box {
+                width: 100%;
+            }
+            select, input { 
+                width: 100%; /* Makes inputs full width on phones */
+                box-sizing: border-box; 
+            }
+            .btn-large { 
+                width: 100%; 
+                margin-top: 10px;
+                padding: 15px; /* Larger touch target for thumbs */
+            }
+            .header h1 {
+                font-size: 22px; /* Slightly smaller title for mobile */
+            }
+            th, td {
+                padding: 10px 5px; /* Tighter table spacing */
+                font-size: 14px;
+            }
+        }
+        /* --- DELETE BUTTON --- */
+        .btn-delete {
+            background-color: #ff4d4d; /* Soft red for warning */
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s ease;
+        }
+
+        .btn-delete:hover {
+            background-color: #cc0000; /* Darker red on hover */
+        }
+        /* --- CUSTOM PROFESSIONAL MODAL --- */
+        .modal-overlay {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(10, 25, 47, 0.7); /* Hatimi Navy with transparency */
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(4px); /* Modern blurred background effect */
+        }
+        .modal-content {
+            background: var(--white);
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 420px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+            border-top: 5px solid var(--error); /* Red indicator for deletion */
+            text-align: center;
+        }
+        .modal-content h3 {
+            margin-top: 0;
+            color: var(--navy);
+            font-size: 22px;
+        }
+        .modal-content p {
+            color: #555;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin-top: 25px;
+        }
+        .btn-cancel {
+            flex: 1;
+            padding: 12px;
+            background: #e0e0e0;
+            color: #333;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 15px;
+            transition: 0.3s;
+        }
+        .btn-cancel:hover { background: #ccc; }
+        .btn-confirm-delete {
+            flex: 1;
+            padding: 12px;
+            background: var(--error);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 15px;
+            transition: 0.3s;
+        }
+        .btn-confirm-delete:hover { background: #900000; }
+        /* --- GODOWN LIVE QUEUE --- */
+        .godown-panel {
+            border: 3px solid #ff4d4d;
+            background: #fff0f0;
+            margin-bottom: 20px;
+        }
+        .godown-panel h3 {
+            color: #cc0000;
+            border-bottom: 2px solid #ffcccc;
+        }
+        .queue-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .queue-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 6px solid #ff4d4d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .queue-details {
+            font-size: 16px;
+            line-height: 1.4;
+        }
+        .queue-details strong {
+            color: var(--navy);
+            font-size: 20px;
+        }
+        .queue-instruction {
+            margin-top: 8px;
+            color: #d32f2f;
+            font-weight: bold;
+            background: #ffebee;
+            padding: 6px 12px;
+            border-radius: 4px;
+            display: inline-block;
+            font-size: 15px;
+            border: 1px solid #ffcdd2;
+        }
+        .btn-done {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-done:hover {
+            background: #114a1d;
+        }
+        
+        @media (max-width: 768px) {
+            .queue-card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            .btn-done {
+                width: 100%;
+            }
+        }
+  </style>
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "f3b6b4a5-2fbd-417f-b990-14fa64d6d350",
+      serviceWorkerParam: { scope: "/hatimi-grill-jali-app/" },
+      serviceWorkerPath: "/hatimi-grill-jali-app/OneSignalSDKWorker.js" 
+    });
+  });
+</script>
+</head>
+<body>
+<!-- CUSTOM CONFIRM DELETE MODAL -->
+    <div id="deleteModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Confirm Deletion</h3>
+            <p>Are you sure you want to delete this log entry?</p>
+            <p style="font-size: 13px; color: #777; background: #f9f9f9; padding: 10px; border-radius: 6px; border: 1px solid #eee;">
+                <strong>Note:</strong> You will need to manually adjust your stock using the +/- buttons if you need to return the sheet to inventory.
+            </p>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="window.closeModal()">Cancel</button>
+                <button class="btn-confirm-delete" onclick="window.confirmDeleteAction()">Yes, Delete</button>
+            </div>
+        </div>
+    </div>
+    <div class="header">
+        <h1>Hatimi Hardware - Jali Organizer</h1>
+        <p style="margin:5px 0 0 0; color:#ddd;">Smart Cutting, Inventory & Live Cloud Sync</p>
+    </div>
+
+    <div id="toast"></div>
+<!-- GODOWN QUEUE -->
+    <div class="panel godown-panel">
+        <h3>🔴 Live Godown Orders (To Be Cut)</h3>
+        <div id="godownQueue" class="queue-container"></div>
+    </div>
+    <div class="panel smart-cutter">
+        <h3>Smart Customer Cut</h3>
+        <div class="input-group">
+            <div class="input-box">
+                <label>Customer Name:</label>
+                <input type="text" id="custName" placeholder="Enter Name" style="width: 200px;">
+            </div>
+            <div class="input-box">
+                <label>Width Needed:</label>
+                <select id="reqWidth">
+                    <option value="2">2 ft</option>
+                    <option value="2.5">2.5 ft</option>
+                    <option value="3">3 ft</option>
+                    <option value="3.5">3.5 ft</option>
+                    <option value="4">4 ft</option>
+                    <option value="5">5 ft</option>
+                </select>
+            </div>
+            <div class="input-box">
+                <label>Length Needed (ft):</label>
+                <input type="number" id="reqLength" placeholder="e.g. 3.5" step="0.5">
+            </div>
+            <div class="input-box">
+                <button class="btn-large" onclick="processSmartCut()">Process Cut</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid-layout">
+        <div class="panel">
+            <h3>Full Straight Sheets (12ft)</h3>
+            <table>
+                <thead>
+                    <tr><th>Width</th><th>Qty in Stock</th><th>Adjust</th></tr>
+                </thead>
+                <tbody id="fullStockTable"></tbody>
+            </table>
+        </div>
+
+        <div class="panel">
+            <h3>Offcut Bin (Leftovers)</h3>
+            <table>
+                <thead>
+                    <tr><th>Piece ID</th><th>Width</th><th>Remaining Length</th></tr>
+                </thead>
+                <tbody id="offcutTable"></tbody>
+            </table>
+        </div>
+
+        <div class="panel" style="grid-column: 1 / -1;">
+            <h3>Daily Cut & Sales Log</h3>
+            <table>
+                <thead>
+                    <tr><th>Date & Time</th><th>Customer</th><th>Size Cut</th><th>Source Piece</th><th>Leftover Saved</th><th>Action</th></tr>
+                </thead>
+                <tbody id="logTable"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="module">
+        // Firebase Cloud Module (Messaging Removed)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyBitqayX2VPBNpV3wpDKyZEnJxE7dgWEWE",
+          authDomain: "hatimi-jali-app.firebaseapp.com",
+          projectId: "hatimi-jali-app",
+          storageBucket: "hatimi-jali-app.firebasestorage.app",
+          messagingSenderId: "631367054682",
+          appId: "1:631367054682:web:884fa53b80f7b21b542f63",
+          measurementId: "G-W8KXHXRN1D"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const inventoryRef = doc(db, "hatimi_data", "jali_inventory");
+
+       let fullStock = { "2": 0, "2.5": 0, "3": 0, "3.5": 0, "4": 0, "5": 0 };
+        let offcuts = [];
+        let cutLogs = [];
+        let activeQueue = []; // New queue for the godown
+
+        onSnapshot(inventoryRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                fullStock = data.fullStock || fullStock;
+                offcuts = data.offcuts || [];
+                cutLogs = data.cutLogs || [];
+                activeQueue = data.activeQueue || []; // Add this
+                renderUI();
+            } else {
+                saveToServer();
+            }
+        });
+
+        async function saveToServer() {
+            offcuts = offcuts.filter(item => parseFloat(item.length) > 0);
+            await setDoc(inventoryRef, {
+                fullStock: fullStock,
+                offcuts: offcuts,
+                cutLogs: cutLogs,
+                activeQueue: activeQueue // Add this
+            });
+        }
+
+        function renderUI() {
+            // Draw Godown Queue
+            const queueContainer = document.getElementById('godownQueue');
+            queueContainer.innerHTML = '';
+            if (activeQueue.length === 0) {
+                queueContainer.innerHTML = '<p style="text-align:center; color:#888; font-weight:bold;">No pending orders for godown.</p>';
+            } else {
+                activeQueue.forEach(order => {
+                    queueContainer.innerHTML += `
+                        <div class="queue-card">
+                            <div class="queue-details">
+                                <strong>${order.customer || 'Walk-in'}</strong><br>
+                                Size Needed: <span style="font-size:18px; font-weight:bold; color:var(--navy);">${order.width} x ${order.length} ft</span><br>
+                                <span class="queue-instruction">INSTRUCTION: ${order.source}</span>
+                            </div>
+                            <button class="btn-done" onclick="window.markGodownDone('${order.id}')">✔️ Mark Cut</button>
+                        </div>
+                    `;
+                });
+            }
+            const stockBody = document.getElementById('fullStockTable');
+            stockBody.innerHTML = '';
+            for (const [width, qty] of Object.entries(fullStock)) {
+                stockBody.innerHTML += `
+                    <tr>
+                        <td><strong>${width} ft</strong></td>
+                        <td>${qty} Pieces</td>
+                        <td>
+                            <div class="stock-controls">
+                                <button class="btn-circle" onclick="window.adjustStock('${width}', -1)">-</button>
+                                <button class="btn-circle" onclick="window.adjustStock('${width}', 1)">+</button>
+                            </div>
+                        </td>
+                    </tr>`;
+            }
+
+            const offcutBody = document.getElementById('offcutTable');
+            offcutBody.innerHTML = '';
+            let sortedOffcuts = [...offcuts].sort((a, b) => a.width - b.width || a.length - b.length);
+            if(sortedOffcuts.length === 0) {
+                offcutBody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#999;">No offcuts available.</td></tr>';
+            } else {
+                sortedOffcuts.forEach(item => {
+                    offcutBody.innerHTML += `
+                        <tr>
+                            <td><span style="color:var(--navy); font-weight:bold;">${item.id}</span></td>
+                            <td>${item.width} ft</td>
+                            <td><span class="offcut-tag">${item.length} ft</span></td>
+                        </tr>`;
+                });
+            }
+
+            const logBody = document.getElementById('logTable');
+            logBody.innerHTML = '';
+            let reversedLogs = [...cutLogs].reverse().slice(0, 15); 
+            if(reversedLogs.length === 0) {
+                logBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#999;">No cuts logged yet.</td></tr>';
+            } else {
+                reversedLogs.forEach(log => {
+                    logBody.innerHTML += `
+                        <tr>
+                            <td style="font-size:12px; color:#666;">${log.time}</td>
+                            <td><strong>${log.customer || 'Walk-in'}</strong></td>
+                            <td>${log.width}x${log.length} ft</td>
+                            <td>${log.source}</td>
+                            <td>${log.leftover}</td>
+                            <td><button class="btn-delete" onclick="window.deleteCut('${log.time}')">🗑️ Delete</button></td>
+                        </tr>`;
+                });
+            }
+        }
+
+        function generateId() {
+            let maxId = 0;
+            offcuts.forEach(o => {
+                let num = parseInt(o.id.replace('J-', ''));
+                if (num > maxId) maxId = num;
+            });
+            return `J-${(maxId + 1).toString().padStart(3, '0')}`;
+        }
+
+        function showNotification(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.innerHTML = message;
+            if (isError) toast.classList.add('error');
+            else toast.classList.remove('error');
+            
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 6000);
+        }
+
+        window.adjustStock = async function(width, amount) {
+            if (fullStock[width] + amount >= 0) {
+                fullStock[width] += amount;
+                await saveToServer();
+            }
+        };
+
+        window.processSmartCut = async function() {
+            const customerInput = document.getElementById('custName').value;
+            const customer = customerInput ? customerInput : "Walk-in Customer";
+            const width = document.getElementById('reqWidth').value;
+            const length = parseFloat(document.getElementById('reqLength').value);
+
+            if (isNaN(length) || length <= 0) {
+                showNotification("<strong>Error:</strong> Please enter a valid cut length.", true);
+                return;
+            }
+            if (length > 12) {
+                showNotification("<strong>Error:</strong> Cannot cut more than 12ft.", true);
+                return;
+            }
+
+            // 1. Figure out instructions for the Godown (No stock deduction yet!)
+            let instruction = "";
+            let sourceType = "";
+            let sourceId = "";
+            
+            let validOffcuts = offcuts.filter(o => o.width === width && o.length >= length);
+            
+            if (validOffcuts.length > 0) {
+                validOffcuts.sort((a, b) => a.length - b.length);
+                let bestPiece = validOffcuts[0];
+                instruction = `Cut from Offcut ${bestPiece.id} (${bestPiece.length}ft)`;
+                sourceType = "offcut";
+                sourceId = bestPiece.id;
+            } 
+            else if (fullStock[width] > 0) {
+                instruction = `Cut from a NEW 12ft Sheet`;
+                sourceType = "full";
+            } else {
+                showNotification(`<strong>Out of Stock!</strong> You need a new 12ft sheet of ${width}ft width.`, true);
+                return;
+            }
+
+            // 2. Create the Requirement Message
+            let queueEntry = {
+                id: Date.now().toString(), // Unique ID for this order
+                time: new Date().toLocaleString(),
+                customer: customer,
+                width: width,
+                length: length,
+                source: instruction,
+                sourceType: sourceType,
+                sourceId: sourceId
+            };
+
+            // 3. Send ONLY to the Godown Queue
+            activeQueue.push(queueEntry);
+            await saveToServer(); 
+            
+            // 4. Clear inputs and notify shop
+            document.getElementById('custName').value = '';
+            document.getElementById('reqLength').value = '';
+            showNotification("Requirement sent to Godown screen!", false);
+
+            // 5. Trigger OneSignal Notification to phones
+            const oneSignalAppId = "f3b6b4a5-2fbd-417f-b990-14fa64d6d350";
+            const oneSignalRestApiKey = atob("eDdvbXFjdDVnanZ3dGtiZGdwY3Zja3ZzdW92ZWNwbnJxNG5jZ3RibGg0N2V5N3ZrcTIzeXluaDJ2NDVyeHdiYnRzZm03aHByejUzcTQ3ZTRxemJ5a2k2bXFlMnk=");
+            
+            const notificationPayload = {
+                app_id: oneSignalAppId,
+                included_segments: ["Active Subscriptions"], 
+                headings: { en: "New Jali Order" },
+                contents: { en: `${customer} needs ${width}x${length}ft. ${instruction}` }
+            };
+
+            try {
+                await fetch("https://onesignal.com/api/v1/notifications", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json; charset=utf-8",
+                        "Authorization": `Basic ${oneSignalRestApiKey}`
+                    },
+                    body: JSON.stringify(notificationPayload)
+                });
+            } catch (error) {
+                console.error("Error triggering OneSignal:", error);
+            }
+        };
+      // --- DELETE / UNDO FUNCTION (CUSTOM MODAL) ---
+        let logToDelete = null; // Variable to temporarily hold the ID
+
+        // 1. Triggered when the trash can button in the table is clicked
+        window.deleteCut = function(logTime) {
+            logToDelete = logTime; 
+            document.getElementById('deleteModal').style.display = 'flex'; // Show the nice modal
+        };
+
+        // 2. Triggered if they click "Cancel"
+        window.closeModal = function() {
+            document.getElementById('deleteModal').style.display = 'none'; // Hide modal
+            logToDelete = null; // Clear the memory
+        };
+
+        // 3. Triggered if they click "Yes, Delete"
+        window.confirmDeleteAction = async function() {
+            if (!logToDelete) return;
+
+            const logIndex = cutLogs.findIndex(log => log.time === logToDelete);
+            
+            if (logIndex !== -1) {
+                cutLogs.splice(logIndex, 1);
+                await saveToServer(); 
+                showNotification("Log entry deleted successfully.", false);
+            }
+            
+            window.closeModal(); // Hide the modal after deleting
+        };
+       // --- GODOWN COMPLETION (ACTUAL STOCK DEDUCTION) ---
+        window.markGodownDone = async function(orderId) {
+            const index = activeQueue.findIndex(o => o.id === orderId);
+            if (index === -1) return;
+
+            const order = activeQueue[index];
+            const width = order.width;
+            const length = order.length;
+            
+            let logEntry = {
+                time: new Date().toLocaleString(),
+                customer: order.customer,
+                width: width,
+                length: length,
+                source: "",
+                leftover: ""
+            };
+
+            // 1. DEDUCT THE STOCK NOW
+            if (order.sourceType === "offcut") {
+                let pieceIndex = offcuts.findIndex(o => o.id === order.sourceId);
+                if (pieceIndex !== -1) {
+                    let piece = offcuts[pieceIndex];
+                    piece.length = parseFloat((piece.length - length).toFixed(1));
+                    logEntry.source = `Offcut ${piece.id}`;
+                    logEntry.leftover = `${piece.length} ft left`;
+                } else {
+                    logEntry.source = "Missing Offcut";
+                    logEntry.leftover = "Error";
+                }
+            } else if (order.sourceType === "full") {
+                if (fullStock[width] > 0) {
+                    fullStock[width] -= 1;
+                    let remainder = parseFloat((12.0 - length).toFixed(1));
+                    
+                    if (remainder > 0) {
+                        let newId = generateId();
+                        offcuts.push({ id: newId, width: width, length: remainder });
+                        logEntry.source = `New 12ft Piece`;
+                        logEntry.leftover = `Saved ${remainder}ft as ${newId}`;
+                    } else {
+                        logEntry.source = `New 12ft Piece`;
+                        logEntry.leftover = `None`;
+                    }
+                }
+            }
+
+            // 2. LOG IT AND REMOVE FROM QUEUE
+            cutLogs.push(logEntry);
+            activeQueue.splice(index, 1);
+            
+            // 3. SAVE AND SYNC
+            await saveToServer();
+            showNotification("Cut confirmed! Inventory deducted.", false);
+        };
+    </script>
+</body>
+</html>
