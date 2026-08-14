@@ -594,7 +594,7 @@
     </div>
 
 
-    <!-- ========================================== -->
+ <!-- ========================================== -->
     <!-- 📄 PAGE 3: HISTORY & LEDGERS               -->
     <!-- ========================================== -->
     <div id="page-logs" class="app-page">
@@ -630,28 +630,63 @@
             </div>
 
             <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px;">
-                <h3 style="margin: 0; color: var(--navy);">📦 Dealer Delivery Log (Inward Stock)</h3>
+                <h3 style="margin: 0; color: var(--navy);">📦 Dealer Delivery Log</h3>
                 <button onclick="window.clearDeliveryLog()" style="background: white; border: 1px solid #fca5a5; color: #ef4444; border-radius: 4px; padding: 6px 12px; cursor: pointer; font-size: 13px; font-weight: bold;">
                     Clear Old Records
                 </button>
             </div>
-            <p style="font-size: 13px; color: #64748b; margin-top: 0; margin-bottom: 15px;">Automatically tracks every time new 12ft sheets are added to inventory.</p>
             
-            <div class="scrollable-table-container" style="max-height: 300px;">
-                <table class="sticky-header" style="width: 100%; border-collapse: collapse; text-align: left;">
-                    <thead>
-                        <tr>
-                            <th style="padding-bottom: 10px;">Date & Time</th>
-                            <th style="padding-bottom: 10px;">Sheet Width</th>
-                            <th style="padding-bottom: 10px;">Qty Received</th>
-                        </tr>
-                    </thead>
-                    <tbody id="deliveryLogTable"></tbody>
-                </table>
+            <!-- NEW: MANUAL PAST PURCHASE FORM (PREMIUM UI) -->
+            <div style="background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px; margin-bottom: 25px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+                
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 18px;">
+                    <span style="background: var(--navy); color: white; border-radius: 4px; padding: 4px 8px; font-size: 12px; font-weight: bold;">✚</span>
+                    <h4 style="margin: 0; color: var(--navy); font-size: 16px;">Log Past Purchase</h4>
+                </div>
+                
+                <!-- CSS Grid keeps everything perfectly proportioned on any screen size -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; align-items: end;">
+                    <div>
+                        <label style="font-size: 11px; font-weight: 700; color: #64748b; display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Date</label>
+                        <input type="date" id="manualDeliveryDate" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 12px; font-family: inherit; font-size: 14px; color: #1e293b; box-sizing: border-box; outline-color: var(--navy);">
+                    </div>
+                    <div>
+                        <label style="font-size: 11px; font-weight: 700; color: #64748b; display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Width</label>
+                        <select id="manualDeliveryWidth" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 12px; background: white; font-family: inherit; font-weight: 600; font-size: 14px; color: #1e293b; box-sizing: border-box; outline-color: var(--navy);">
+                            <option value="2">2 ft</option>
+                            <option value="2.5">2.5 ft</option>
+                            <option value="3">3 ft</option>
+                            <option value="3.5">3.5 ft</option>
+                            <option value="4">4 ft</option>
+                            <option value="5">5 ft</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size: 11px; font-weight: 700; color: #64748b; display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Qty</label>
+                        <input type="number" id="manualDeliveryQty" value="1" step="1" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 12px; text-align: center; font-weight: 700; font-family: inherit; font-size: 15px; color: #1e293b; box-sizing: border-box; outline-color: var(--navy);">
+                    </div>
+                    <div>
+                        <button onclick="window.addManualDelivery()" style="width: 100%; height: 42px; background: var(--navy); color: white; border: none; border-radius: 6px; font-weight: 700; font-size: 14px; cursor: pointer; transition: opacity 0.2s; box-shadow: 0 2px 4px rgba(15, 23, 42, 0.2);">
+                            💾 Save Entry
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Refined Alert Box for the Checkbox -->
+                <div style="margin-top: 18px; display: flex; align-items: center; gap: 10px; background: #f8fafc; padding: 12px 15px; border-radius: 6px; border-left: 4px solid #d97706;">
+                    <input type="checkbox" id="addPastToLiveStock" checked style="accent-color: #d97706; width: 18px; height: 18px; cursor: pointer;">
+                    <label for="addPastToLiveStock" style="font-size: 13px; color: #334155; font-weight: 600; cursor: pointer; user-select: none;">
+                        Also add these sheets to my Live Godown Stock
+                    </label>
+                </div>
+            </div>
+
+            <!-- NEW: GROUPED LEDGER CONTAINER -->
+            <div id="deliveryLogTable" class="scrollable-table-container" style="max-height: 400px; padding-right: 5px; border: none;">
+                <!-- JS will draw the daily cards here -->
             </div>
         </div>
-    </div>
-
+    </div> <!-- PERFECTLY CLOSED PAGE 3 -->
 
     <!-- PROFESSIONAL OFFCUT DELETE MODAL (Stays outside pages) -->
     <div id="offcutDeleteModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(2px);">
@@ -686,54 +721,105 @@
         </button>
     </div>
 
-        <script type="module">
-            // Firebase Cloud Module
-            import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-            import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+       <script>
+        // --- CORE DATABASE VARIABLES ---
+        let fullStock = { "2": 0, "2.5": 0, "3": 0, "3.5": 0, "4": 0, "5": 0 };
+        let offcuts = [];
+        let cutLogs = [];
+        let activeQueue = []; 
+        let currentCustomerCart = []; 
+        let dealerDeliveries = [];
 
-            const firebaseConfig = {
-                apiKey: "AIzaSyBitqayX2VPBNpV3wpDKyZEnJxE7dgWEWE",
-                authDomain: "hatimi-jali-app.firebaseapp.com",
-                projectId: "hatimi-jali-app",
-                storageBucket: "hatimi-jali-app.firebasestorage.app",
-                messagingSenderId: "631367054682",
-                appId: "1:631367054682:web:884fa53b80f7b21b542f63",
-                measurementId: "G-W8KXHXRN1D"
-            };
+       // ==========================================
+        // ☁️ LIVE GOOGLE SHEETS CLOUD SYNC
+        // ==========================================
+        
+        const GOOGLE_APP_URL = "https://script.google.com/macros/s/AKfycby3Mq3QKfFo5ekPZlmAm-P-lbdE5i8xCTsuTFo_12-4kBGbyMukKDhPAd3v9WBSXepmvA/exec";
 
-            const app = initializeApp(firebaseConfig);
-            const db = getFirestore(app);
-            const inventoryRef = doc(db, "hatimi_data", "jali_inventory");
+        let saveTimeout = null; // Memory for the Debouncer
 
-            let fullStock = { "2": 0, "2.5": 0, "3": 0, "3.5": 0, "4": 0, "5": 0 };
-            let offcuts = [];
-            let cutLogs = [];
-            let activeQueue = []; 
-            let currentCustomerCart = []; // NEW: Temporary holding list for sizes
+        // 1. SAVE TO CLOUD & LOCAL CACHE
+        window.saveToServer = async function() {
+            // Save temporary queues locally so they instantly survive a page refresh
+            localStorage.setItem('activeQueue', JSON.stringify(activeQueue));
+            localStorage.setItem('cutLogs', JSON.stringify(cutLogs));
+            localStorage.setItem('currentCustomerCart', JSON.stringify(currentCustomerCart));
 
-            onSnapshot(inventoryRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    fullStock = data.fullStock || fullStock;
-                    offcuts = data.offcuts || [];
-                    cutLogs = data.cutLogs || [];
-                    activeQueue = data.activeQueue || []; 
-                    renderUI();
-                } else {
-                    saveToServer();
+            // 🛑 DEBOUNCER: Wait for rapid clicking to stop before sending to Google
+            if (saveTimeout) clearTimeout(saveTimeout);
+            
+            saveTimeout = setTimeout(async () => {
+                try {
+                    const payload = {
+                        fullStock: fullStock,
+                        offcuts: offcuts,
+                        dealerDeliveries: dealerDeliveries
+                    };
+                    
+                    await fetch(GOOGLE_APP_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'text/plain;charset=utf-8',
+                        },
+                        body: JSON.stringify(payload),
+                        redirect: 'follow'
+                    });
+                    console.log("Cloud Save Successful");
+                } catch (error) {
+                    console.error("Failed to save to Google Sheets:", error);
+                    showNotification("Warning: Cloud Sync Failed!", true);
                 }
-            });
+            }, 800); // Waits 0.8 seconds after your last click before hitting Google
+        };
 
-            async function saveToServer() {
-                offcuts = offcuts.filter(item => parseFloat(item.length) > 0);
-                await setDoc(inventoryRef, {
-                    fullStock: fullStock,
-                    offcuts: offcuts,
-                    cutLogs: cutLogs,
-                    activeQueue: activeQueue 
-                });
+        // 2. LOAD FROM CLOUD ON STARTUP
+        window.loadFromServer = async function() {
+            try {
+                showNotification("Syncing with Cloud Database...", false);
+
+                // Restore temporary queues from local memory
+                const savedQueue = localStorage.getItem('activeQueue');
+                if (savedQueue) activeQueue = JSON.parse(savedQueue);
+                
+                const savedLogs = localStorage.getItem('cutLogs');
+                if (savedLogs) cutLogs = JSON.parse(savedLogs);
+                
+                const savedCart = localStorage.getItem('currentCustomerCart');
+                if (savedCart) currentCustomerCart = JSON.parse(savedCart);
+                
+                // Fetch core inventory from Google Sheets
+                const response = await fetch(GOOGLE_APP_URL, { redirect: 'follow' });
+                const data = await response.json();
+
+                // Inject the live data from Google Sheets into the app
+                if (data.fullStock && Object.keys(data.fullStock).length > 0) fullStock = data.fullStock;
+                if (data.offcuts) offcuts = data.offcuts;
+                if (data.dealerDeliveries) dealerDeliveries = data.dealerDeliveries;
+
+                // THE FIX: Draw the screen using your actual master function!
+                renderUI();
+                if(typeof window.renderCart === 'function') window.renderCart();
+                if(typeof window.renderDeliveryLog === 'function') window.renderDeliveryLog();
+                
+                showNotification("Cloud Sync Complete!", false);
+            } catch (error) {
+                console.error("Failed to load from Google Sheets:", error);
+                showNotification("Offline Mode: Using local data.", true);
+                
+                // Even if offline, draw the screen with whatever we have
+                renderUI();
+                if(typeof window.renderCart === 'function') window.renderCart();
+                if(typeof window.renderDeliveryLog === 'function') window.renderDeliveryLog();
             }
-    // --- SMART CALCULATOR (SINGLE BOX) ---
+        };
+
+        // 3. TRIGGER LOAD WHEN APP OPENS
+        window.onload = function() {
+            window.loadFromServer();
+        };
+
+
+        // --- SMART CALCULATOR (SINGLE BOX) ---
         const inputValue = document.getElementById('reqLengthValue');
         const inputUnit = document.getElementById('reqLengthUnit');
         const inputWidth = document.getElementById('reqWidth');
@@ -744,198 +830,156 @@
             const val = parseFloat(inputValue.value) || 0;
             const unit = inputUnit.value;
             
-            // Convert inches to feet just for the Square Feet display math
             const ft = unit === 'in' ? val / 12 : val;
             displaySqFt.innerText = (width * ft).toFixed(2);
         };
 
-        // Listen for typing or changing the dropdowns
         if (inputValue) inputValue.addEventListener('input', window.updateLiveSqFt);
         if (inputUnit) inputUnit.addEventListener('change', window.updateLiveSqFt);
         if (inputWidth) inputWidth.addEventListener('change', window.updateLiveSqFt);
+        inputWidth.addEventListener('input', window.updateLiveSqFt);    
 
-            // 3. Changing WIDTH updates Square Feet
-            inputWidth.addEventListener('input', window.updateLiveSqFt);    
 
-            function renderUI() {
-                // Draw Godown Queue (Grouped by Customer)
-                const queueContainer = document.getElementById('godownQueue');
+        // --- MASTER UI RENDERER ---
+        function renderUI() {
+            // Draw Godown Queue
+            const queueContainer = document.getElementById('godownQueue');
+            if(queueContainer) {
                 queueContainer.innerHTML = '';
-                
                 if (activeQueue.length === 0) {
                     queueContainer.innerHTML = '<p style="text-align:center; color:#888; font-weight:bold;">No pending orders for godown.</p>';
                 } else {
-                    // 1. Group the flat queue by Customer Name
                     const groupedOrders = {};
                     activeQueue.forEach(order => {
                         const custName = order.customer || 'Walk-in';
-                        if (!groupedOrders[custName]) {
-                            groupedOrders[custName] = [];
-                        }
+                        if (!groupedOrders[custName]) groupedOrders[custName] = [];
                         groupedOrders[custName].push(order);
                     });
 
-                // 2. Create one Master Card per Customer (MOBILE OPTIMIZED)
                     for (const [customerName, items] of Object.entries(groupedOrders)) {
                         let cardHTML = `
                             <div class="queue-card" style="margin-bottom: 15px; background: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow: hidden; border: 1px solid #e2e8f0;">
-                                
-                                <!-- Customer Header (Clean Navy/Slate) -->
                                 <div style="background-color: #f8fafc; padding: 12px 15px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between;">
-                                    <h4 style="margin: 0; font-size: 15px; font-weight: 700; color: var(--navy, #0f172a); text-transform: uppercase; letter-spacing: 0.5px;">
-                                        🛒 ${customerName}
-                                    </h4>
-                                    <span style="background: #e2e8f0; color: #475569; font-size: 11px; padding: 4px 8px; border-radius: 4px; font-weight: 700;">
-                                        ${items.length} ITEM(S)
-                                    </span>
+                                    <h4 style="margin: 0; font-size: 15px; font-weight: 700; color: var(--navy, #0f172a); text-transform: uppercase; letter-spacing: 0.5px;">🛒 ${customerName}</h4>
+                                    <span style="background: #e2e8f0; color: #475569; font-size: 11px; padding: 4px 8px; border-radius: 4px; font-weight: 700;">${items.length} ITEM(S)</span>
                                 </div>
-                                
-                                <!-- Strict Vertical List of items for this customer -->
                                 <div style="padding: 15px; display: flex; flex-direction: column; gap: 15px;">
                         `;
 
-                        // 3. List every size for this customer inside their box
                         items.forEach((order, index) => {
                             const isLast = index === items.length - 1;
                             const borderStyle = isLast ? '' : 'border-bottom: 1px dashed #cbd5e1; padding-bottom: 15px;';
-                            
-                            // Convert decimal feet back to exact inches for the tape measure
                             const lengthInches = Math.round(parseFloat(order.reqLength) * 12);
                             
                             cardHTML += `
-                                    <div style="display: flex; flex-direction: column; gap: 12px; width: 100%; ${borderStyle}">
-                                        
-                                        <!-- Shop Requested Header -->
-                                        <div style="display: flex; flex-direction: column; gap: 2px;">
-                                            <span style="color:#64748b; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Requested Size</span>
-                                            <div style="font-size: 18px; color: var(--navy, #0f172a); font-weight: 700;">
-                                                ${order.reqWidth} <span style="font-size: 14px; color: #94a3b8; font-weight: 500;">ft</span> 
-                                                <span style="color: #cbd5e1; margin: 0 4px; font-weight: normal;">×</span> 
-                                                <span style="color: #ef4444; font-size: 22px;">${lengthInches}</span> <span style="font-size: 14px; color: #94a3b8; font-weight: 500;">inches</span>
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- Action Row (Inputs and Buttons) -->
-                                        <div style="background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 10px;">
-                                            
-                                            <div style="font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px;">CONFIRM ACTUAL CUT:</div>
-                                            
-                                            <!-- Inputs (FLEXBOX FOR MOBILE PERFECT FIT) -->
-                                            <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
-                                                <select id="godownWidth_${order.id}" class="modern-select" style="flex: 1; min-width: 0;">
-    <option value="2" ${order.reqWidth === '2' ? 'selected' : ''}>2 ft</option>
-    <option value="2.5" ${order.reqWidth === '2.5' ? 'selected' : ''}>2.5 ft</option>
-    <option value="3" ${order.reqWidth === '3' ? 'selected' : ''}>3 ft</option>
-    <option value="3.5" ${order.reqWidth === '3.5' ? 'selected' : ''}>3.5 ft</option>
-    <option value="4" ${order.reqWidth === '4' ? 'selected' : ''}>4 ft</option>
-    <option value="5" ${order.reqWidth === '5' ? 'selected' : ''}>5 ft</option>
-</select>
-                                                
-                                                <span style="color: #94a3b8; font-weight: bold; font-size: 14px;">✕</span>
-                                                
-                                                <div style="flex: 1; min-width: 0; position: relative; display: flex; align-items: center;">
-                                                    <input type="number" id="godownLengthInches_${order.id}" value="${lengthInches}" step="1" style="width: 100%; padding: 10px; padding-right: 32px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 16px; font-weight: bold; color: #ef4444; text-align: center; outline: none; box-sizing: border-box; background: white;">
-                                                    <span style="position: absolute; right: 10px; color: #94a3b8; font-size: 13px; font-weight: 600;">in</span>
-                                                </div>
-                                            </div>
-                                            
-                                            <!-- Action Buttons (GRID SETUP FOR THUMBS) -->
-                                            <div style="display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 4px;">
-                                                <button style="background: #10b981; color: white; border: none; padding: 12px; border-radius: 4px; font-weight: 700; cursor: pointer; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);" onclick="window.processGodownCut('${order.id}')">
-                                                    ✓ Process Cut
-                                                </button>
-                                                <button style="background: white; color: #ef4444; border: 1px solid #fca5a5; padding: 0 16px; border-radius: 4px; cursor: pointer; font-size: 16px;" onclick="window.deleteGodownOrder('${order.id}')">
-                                                    🗑️
-                                                </button>
-                                            </div>
-                                            
+                                <div style="display: flex; flex-direction: column; gap: 12px; width: 100%; ${borderStyle}">
+                                    <div style="display: flex; flex-direction: column; gap: 2px;">
+                                        <span style="color:#64748b; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Requested Size</span>
+                                        <div style="font-size: 18px; color: var(--navy, #0f172a); font-weight: 700;">
+                                            ${order.reqWidth} <span style="font-size: 14px; color: #94a3b8; font-weight: 500;">ft</span> 
+                                            <span style="color: #cbd5e1; margin: 0 4px; font-weight: normal;">×</span> 
+                                            <span style="color: #ef4444; font-size: 22px;">${lengthInches}</span> <span style="font-size: 14px; color: #94a3b8; font-weight: 500;">inches</span>
                                         </div>
                                     </div>
-                            `;
+                                    <div style="background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 10px;">
+                                        <div style="font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px;">CONFIRM ACTUAL CUT:</div>
+                                        <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
+                                            <select id="godownWidth_${order.id}" class="modern-select" style="flex: 1; min-width: 0;">
+                                                <option value="2" ${order.reqWidth === '2' ? 'selected' : ''}>2 ft</option>
+                                                <option value="2.5" ${order.reqWidth === '2.5' ? 'selected' : ''}>2.5 ft</option>
+                                                <option value="3" ${order.reqWidth === '3' ? 'selected' : ''}>3 ft</option>
+                                                <option value="3.5" ${order.reqWidth === '3.5' ? 'selected' : ''}>3.5 ft</option>
+                                                <option value="4" ${order.reqWidth === '4' ? 'selected' : ''}>4 ft</option>
+                                                <option value="5" ${order.reqWidth === '5' ? 'selected' : ''}>5 ft</option>
+                                            </select>
+                                            <span style="color: #94a3b8; font-weight: bold; font-size: 14px;">✕</span>
+                                            <div style="flex: 1; min-width: 0; position: relative; display: flex; align-items: center;">
+                                                <input type="number" id="godownLengthInches_${order.id}" value="${lengthInches}" step="1" style="width: 100%; padding: 10px; padding-right: 32px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 16px; font-weight: bold; color: #ef4444; text-align: center; outline: none; box-sizing: border-box; background: white;">
+                                                <span style="position: absolute; right: 10px; color: #94a3b8; font-size: 13px; font-weight: 600;">in</span>
+                                            </div>
+                                        </div>
+                                        <div style="display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 4px;">
+                                            <button style="background: #10b981; color: white; border: none; padding: 12px; border-radius: 4px; font-weight: 700; cursor: pointer; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);" onclick="window.processGodownCut('${order.id}')">✓ Process Cut</button>
+                                            <button style="background: white; color: #ef4444; border: 1px solid #fca5a5; padding: 0 16px; border-radius: 4px; cursor: pointer; font-size: 16px;" onclick="window.deleteGodownOrder('${order.id}')">🗑️</button>
+                                        </div>
+                                    </div>
+                                </div>`;
                         });
 
-                        cardHTML += `
-                                </div>
-                            </div>
-                        `;
+                        cardHTML += `</div></div>`;
                         queueContainer.innerHTML += cardHTML;
                     }
-                    }
+                }
+            }
 
-                const stockBody = document.getElementById('fullStockTable');
-                    stockBody.innerHTML = '';
-                    
-                    // Force JavaScript to sort the widths numerically (lowest to highest)
-                    const sortedWidths = Object.keys(fullStock).sort((a, b) => parseFloat(a) - parseFloat(b));
-                    
-                    sortedWidths.forEach(width => {
-                        const qty = fullStock[width];
-                        stockBody.innerHTML += `
-                            <tr>
-                                <td><strong>${width} ft</strong></td>
-                                <td>${qty} Pieces</td>
-                                <td>
-                                    <div class="stock-controls">
-                                        <button class="btn-circle" onclick="window.adjustStock('${width}', -1)">-</button>
-                                        <button class="btn-circle" onclick="window.adjustStock('${width}', 1)">+</button>
+            // Draw Full Stock
+            const stockBody = document.getElementById('fullStockTable');
+            if(stockBody) {
+                stockBody.innerHTML = '';
+                const sortedWidths = Object.keys(fullStock).sort((a, b) => parseFloat(a) - parseFloat(b));
+                sortedWidths.forEach(width => {
+                    const qty = fullStock[width];
+                    stockBody.innerHTML += `
+                        <tr>
+                            <td><strong>${width} ft</strong></td>
+                            <td>${qty} Pieces</td>
+                            <td>
+                                <div class="stock-controls">
+                                    <button class="btn-circle" onclick="window.adjustStock('${width}', -1)">-</button>
+                                    <button class="btn-circle" onclick="window.adjustStock('${width}', 1)">+</button>
+                                </div>
+                            </td>
+                        </tr>`;
+                });
+            }
+
+            // Draw Offcuts
+            const offcutBody = document.getElementById('offcutTable');
+            if(offcutBody) {
+                offcutBody.innerHTML = '';
+                let sortedOffcuts = [...offcuts].sort((a, b) => a.width - b.width || a.length - b.length);
+                if(sortedOffcuts.length === 0) {
+                    offcutBody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#999; padding: 15px;">No offcuts available.</td></tr>';
+                } else {
+                    sortedOffcuts.forEach(item => {
+                        const offcutInches = Math.round(parseFloat(item.length) * 12);
+                        offcutBody.innerHTML += `
+                            <tr id="row-${item.id}" 
+                                ontouchstart="window.startLongPress(event, '${item.id}')" 
+                                ontouchend="window.cancelLongPress()" 
+                                ontouchmove="window.cancelLongPress()"
+                                onmousedown="window.startLongPress(event, '${item.id}')"
+                                onmouseup="window.cancelLongPress()"
+                                onmouseleave="window.cancelLongPress()"
+                                style="position: relative; transition: background 0.2s;">
+                                
+                                <td style="padding: 12px 8px; vertical-align: middle;"><span style="color:var(--navy); font-weight:bold;">${item.id}</span></td>
+                                <td style="padding: 12px 8px; vertical-align: middle;">${item.width} ft</td>
+                                <td style="padding: 12px 8px; vertical-align: middle;">
+                                    <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-start;">
+                                        <span style="background: #e2e8f0; color: #475569; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 13px;">${item.length} ft</span>
+                                        <span style="color: #64748b; font-size: 12px; font-weight: bold; padding-left: 4px;">(${offcutInches} in)</span>
+                                    </div>
+                                    <div id="delete-overlay-${item.id}" style="display: none; position: absolute; top: 0; right: 0; height: 100%; width: 100%; padding: 0 10px; background: rgba(254, 242, 242, 0.95); align-items: center; justify-content: flex-end; border-radius: 4px; box-shadow: inset 4px 0 10px rgba(0,0,0,0.05);">
+                                        <button onclick="window.deleteOffcut('${item.id}')" style="background: #ef4444; color: white; border: none; border-radius: 6px; padding: 8px 16px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3); cursor: pointer;">🗑️ Delete</button>
+                                        <button onclick="window.hideDelete('${item.id}', event)" style="background: transparent; color: #64748b; border: none; font-size: 16px; margin-left: 15px; padding: 10px; cursor: pointer;">✖</button>
                                     </div>
                                 </td>
                             </tr>`;
                     });
+                }
+            }
 
-            const offcutBody = document.getElementById('offcutTable');
-                    offcutBody.innerHTML = '';
-                    let sortedOffcuts = [...offcuts].sort((a, b) => a.width - b.width || a.length - b.length);
-                    
-                    if(sortedOffcuts.length === 0) {
-                        offcutBody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#999; padding: 15px;">No offcuts available.</td></tr>';
-                    } else {
-                        sortedOffcuts.forEach(item => {
-                            const offcutInches = Math.round(parseFloat(item.length) * 12);
-                            
-                            offcutBody.innerHTML += `
-                                <tr id="row-${item.id}" 
-                                    ontouchstart="window.startLongPress(event, '${item.id}')" 
-                                    ontouchend="window.cancelLongPress()" 
-                                    ontouchmove="window.cancelLongPress()"
-                                    onmousedown="window.startLongPress(event, '${item.id}')"
-                                    onmouseup="window.cancelLongPress()"
-                                    onmouseleave="window.cancelLongPress()"
-                                    style="position: relative; transition: background 0.2s;">
-                                    
-                                    <td style="padding: 12px 8px; vertical-align: middle;"><span style="color:var(--navy); font-weight:bold;">${item.id}</span></td>
-                                    <td style="padding: 12px 8px; vertical-align: middle;">${item.width} ft</td>
-                                    <td style="padding: 12px 8px; vertical-align: middle;">
-                                        <!-- Stacked text so it doesn't look messy on mobile -->
-                                        <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-start;">
-                                            <span style="background: #e2e8f0; color: #475569; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 13px;">${item.length} ft</span>
-                                            <span style="color: #64748b; font-size: 12px; font-weight: bold; padding-left: 4px;">(${offcutInches} in)</span>
-                                        </div>
-                                        
-                                        <!-- HIDDEN DELETE OVERLAY (Revealed on Long Press) -->
-                                        <div id="delete-overlay-${item.id}" style="display: none; position: absolute; top: 0; right: 0; height: 100%; width: 100%; padding: 0 10px; background: rgba(254, 242, 242, 0.95); align-items: center; justify-content: flex-end; border-radius: 4px; box-shadow: inset 4px 0 10px rgba(0,0,0,0.05);">
-                                            <button onclick="window.deleteOffcut('${item.id}')" style="background: #ef4444; color: white; border: none; border-radius: 6px; padding: 8px 16px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3); cursor: pointer;">
-                                                🗑️ Delete
-                                            </button>
-                                            <button onclick="window.hideDelete('${item.id}', event)" style="background: transparent; color: #64748b; border: none; font-size: 16px; margin-left: 15px; padding: 10px; cursor: pointer;">
-                                                ✖
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>`;
-                        });
-                    }
-
+            // Draw Logs
             const logBody = document.getElementById('logTable');
+            if(logBody) {
                 logBody.innerHTML = '';
                 let reversedLogs = [...cutLogs].reverse().slice(0, 15); 
                 if(reversedLogs.length === 0) {
                     logBody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#999; padding: 15px;">No cuts logged yet.</td></tr>';
                 } else {
                     reversedLogs.forEach(log => {
-                        // Convert log length from decimal feet back to exact inches for tallying
                         const logLengthInches = Math.round(parseFloat(log.length) * 12);
-                        
                         logBody.innerHTML += `
                             <tr>
                                 <td style="font-size:12px; color:#666; white-space: nowrap; padding-right: 20px;">${log.time}</td>
@@ -951,73 +995,79 @@
                     });
                 }
             }
+        }
 
-            function generateId() {
-                let maxId = 0;
-                offcuts.forEach(o => {
-                    let num = parseInt(o.id.replace('J-', ''));
-                    if (num > maxId) maxId = num;
-                });
-                return `J-${(maxId + 1).toString().padStart(3, '0')}`;
-            }
 
-            function showNotification(message, isError = false) {
-                const toast = document.getElementById('toast');
-                toast.innerHTML = message;
-                if (isError) toast.classList.add('error');
-                else toast.classList.remove('error');
-                
-                toast.classList.add('show');
-                setTimeout(() => toast.classList.remove('show'), 6000);
-            }
+        // --- HELPERS ---
+        function generateId() {
+            let maxId = 0;
+            offcuts.forEach(o => {
+                let num = parseInt(o.id.replace('J-', ''));
+                if (num > maxId) maxId = num;
+            });
+            return `J-${(maxId + 1).toString().padStart(3, '0')}`;
+        }
 
-          window.adjustStock = async function(width, amount) {
+        function showNotification(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.innerHTML = message;
+            if (isError) toast.classList.add('error');
+            else toast.classList.remove('error');
+            
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 6000);
+        }
+
+       window.adjustStock = async function(width, amount) {
             if (fullStock[width] + amount >= 0) {
                 fullStock[width] += amount;
                 
                 // --- DEALER DELIVERY LOGIC ---
-                // Only record a receipt if we are ADDING stock (+1)
                 if (amount > 0) {
                     const now = new Date();
                     
-                    // Separate the pure date (14/8/2026) from the full timestamp
-                    const pureDateOnly = now.toLocaleDateString('en-IN'); 
-                    const fullDateString = pureDateOnly + " " + now.toLocaleTimeString('en-IN', {hour: '2-digit', minute:'2-digit'});
+                    // 1. Create a perfectly strict date & time string for the screen
+                    const dd = String(now.getDate()).padStart(2, '0');
+                    const mm = String(now.getMonth() + 1).padStart(2, '0');
+                    const yyyy = now.getFullYear();
                     
-                    // SMART AGGREGATION: Check if this width was already added TODAY
-                    let existingEntry = dealerDeliveries.find(entry => {
-                        // Look at the saved entry and grab only the date part before the space
-                        let entryDateOnly = entry.date.split(' ')[0]; 
-                        return entry.width === width && entryDateOnly === pureDateOnly;
-                    });
+                    let hours = now.getHours();
+                    const ampm = hours >= 12 ? 'PM' : 'AM';
+                    hours = hours % 12 || 12; // Converts 0 to 12 for midnight
+                    const mins = String(now.getMinutes()).padStart(2, '0');
+                    
+                    const fullDateString = `${dd}/${mm}/${yyyy} ${hours}:${mins} ${ampm}`;
+                    
+                    // 2. THE MAGIC FIX: Create an unbreakable ID for TODAY + THIS WIDTH
+                    // Example ID: "DEL-15-8-2026-3.5"
+                    const todayId = `DEL-${now.getDate()}-${now.getMonth() + 1}-${yyyy}-${width}`;
+                    
+                    // 3. Check if we already created a row with this exact ID today
+                    let existingEntry = dealerDeliveries.find(entry => entry.id === todayId);
                     
                     if (existingEntry) {
-                        // If added today, bump the quantity so it totals up for the whole day
+                        // If it exists, just bump the quantity and update to the latest time
                         existingEntry.qty += amount;
-                        
-                        // Update the text to show the time of the most recent delivery
                         existingEntry.date = fullDateString; 
                     } else {
-                        // First time adding this width today, create a new row
-                        dealerDeliveries.push({
-                            id: Date.now(),
-                            date: fullDateString,
-                            width: width,
-                            qty: amount
+                        // If it is the first click for this width today, make a new row
+                        dealerDeliveries.push({ 
+                            id: todayId, 
+                            date: fullDateString, 
+                            width: width, 
+                            qty: amount 
                         });
                     }
                     
-                    // Update the log screen
-                    if(typeof window.renderDeliveryLog === 'function') {
-                        window.renderDeliveryLog(); 
-                    }
+                    if(typeof window.renderDeliveryLog === 'function') window.renderDeliveryLog(); 
                 }
-
-                await saveToServer(); // Saves everything to Firebase
+                
+                renderUI(); // Updates the stock numbers instantly
+                saveToServer(); // Sends the batch to Google Sheets in the background
             }
         };
-    // --- CART SYSTEM FUNCTIONS ---
-          window.addSizeToCart = function() {
+        // --- CART SYSTEM ---
+        window.addSizeToCart = function() {
             const width = document.getElementById('reqWidth').value;
             const valInput = document.getElementById('reqLengthValue');
             const val = parseFloat(valInput.value);
@@ -1028,84 +1078,76 @@
                 return;
             }
 
-            // Convert to decimal feet for backend storage
             const lengthFt = unit === 'in' ? parseFloat((val / 12).toFixed(2)) : val;
-
             currentCustomerCart.push({ width: width, length: lengthFt });
             
-            // CLEAN UP: Clear the length box and reset the Live Area
             valInput.value = ''; 
             document.getElementById('liveSqFt').innerText = '0.00';
             
             window.renderCart();
+            saveToServer(); // Background save cache
         };
 
-        // --- RENDERS THE SHOP CART WITH GRAND TOTAL ---
-            window.renderCart = function() {
-                const cartDiv = document.getElementById('customerCart');
-                
-                if (currentCustomerCart.length === 0) {
-                    cartDiv.style.display = 'none';
-                    return;
-                }
-                
-                cartDiv.style.display = 'block';
-                let grandTotalSqFt = 0; 
+       window.renderCart = function() {
+            const cartDiv = document.getElementById('customerCart');
+            if (!cartDiv) return;
 
-                // 1. Foolproof Header: Added flex-wrap, white-space: nowrap, and flex-shrink to prevent text from ever crushing together
-                let html = `
-                    <div style="border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 12px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px;">
-                        <h4 style="margin: 0; color: var(--navy); white-space: nowrap; flex-shrink: 0;">
-                            🛒 Current List
-                        </h4>
-                        <strong style="color: #10b981; font-size: 15px; margin-left: auto; text-align: right; flex-shrink: 0;" id="cartGrandTotal">0.00 Sq Ft Total</strong>
-                    </div>
-                    <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px;">
-                `;
+            if (currentCustomerCart.length === 0) {
+                cartDiv.style.display = 'none';
+                return;
+            }
+            
+            cartDiv.style.display = 'block';
+            let grandTotalSqFt = 0; 
+            let html = `
+                <div style="border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 12px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px;">
+                    <h4 style="margin: 0; color: var(--navy); white-space: nowrap; flex-shrink: 0;">🛒 Current List</h4>
+                    <strong style="color: #10b981; font-size: 15px; margin-left: auto; text-align: right; flex-shrink: 0;" id="cartGrandTotal">0.00 Sq Ft Total</strong>
+                </div>
+                <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px;">`;
+            
+            currentCustomerCart.forEach((item, index) => {
+                let itemSqFt = parseFloat(item.width) * parseFloat(item.length);
+                grandTotalSqFt += itemSqFt; 
+                let displayInches = Math.round(item.length * 12);
                 
-                currentCustomerCart.forEach((item, index) => {
-                    let itemSqFt = parseFloat(item.width) * parseFloat(item.length);
-                    grandTotalSqFt += itemSqFt; 
-                    
-                    let displayInches = Math.round(item.length * 12);
-                    
-                    // 2. Upgraded Item Row
-                    html += `
-                        <li style="padding-bottom: 10px; border-bottom: 1px dashed #e2e8f0; display: flex; justify-content: space-between; align-items: center; font-size: 15px;">
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                                <span style="font-weight: bold; color: var(--navy);">${item.width} ft</span>
-                                <span style="color: #94a3b8; font-size: 13px;">✕</span>
-                                <span style="font-weight: bold; color: #ef4444;">${displayInches} in</span>
-                            </div>
-                            <strong style="color: #64748b;">${itemSqFt.toFixed(2)} Sq Ft</strong>
-                        </li>`;
-                });
-                
-                html += `</ul>`;
-                cartDiv.innerHTML = html;
-                
-                // Inject the final calculated grand total into the header
-                document.getElementById('cartGrandTotal').innerText = `${grandTotalSqFt.toFixed(2)} Sq Ft Total`;
-            };
+                html += `
+                    <li style="padding-bottom: 10px; border-bottom: 1px dashed #e2e8f0; display: flex; justify-content: space-between; align-items: center; font-size: 15px;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <!-- THE NEW DELETE BUTTON -->
+                            <button onclick="window.removeCartItem(${index})" style="background: none; border: none; color: #ef4444; font-size: 16px; cursor: pointer; padding: 0 5px 0 0; margin-right: 5px; font-weight: bold;">✖</button>
+                            
+                            <span style="font-weight: bold; color: var(--navy);">${item.width} ft</span>
+                            <span style="color: #94a3b8; font-size: 13px;">✕</span>
+                            <span style="font-weight: bold; color: #ef4444;">${displayInches} in</span>
+                        </div>
+                        <strong style="color: #64748b;">${itemSqFt.toFixed(2)} Sq Ft</strong>
+                    </li>`;
+            });
+            
+            html += `</ul>`;
+            cartDiv.innerHTML = html;
+            document.getElementById('cartGrandTotal').innerText = `${grandTotalSqFt.toFixed(2)} Sq Ft Total`;
+        };
 
-            window.removeCartItem = function(index) {
-                currentCustomerCart.splice(index, 1);
-                window.renderCart();
-            };
-        // --- SENDS ORDER TO GODOWN (Handles Single & Multiple Sizes) ---
-           window.processSmartCut = async function() {
+        window.removeCartItem = function(index) {
+            currentCustomerCart.splice(index, 1);
+            window.renderCart();
+            saveToServer();
+        };
+
+        // --- GODOWN SENDING ---
+        window.processSmartCut = async function() {
             const valInput = document.getElementById('reqLengthValue');
             const val = parseFloat(valInput.value);
             const unit = document.getElementById('reqLengthUnit').value;
             const width = document.getElementById('reqWidth').value;
 
-            // 1. If there is a size typed in the box, convert and add it
             if (!isNaN(val) && val > 0) {
                 const lengthFt = unit === 'in' ? parseFloat((val / 12).toFixed(2)) : val;
                 currentCustomerCart.push({ width: width, length: lengthFt });
             }
 
-            // 2. Check if we have anything to send at all
             if (currentCustomerCart.length === 0) {
                 showNotification("<strong>Error:</strong> Please enter a size to send.", true);
                 return;
@@ -1115,41 +1157,34 @@
             const customer = customerInput.value ? customerInput.value : "Walk-in Customer";
             let summaryText = "";
 
-            // 3. Loop through everything and add to Godown Queue
             currentCustomerCart.forEach((item, index) => {
                 let queueEntry = {
                     id: Date.now().toString() + "-" + index, 
                     time: new Date().toLocaleString(),
                     customer: customer,
                     reqWidth: item.width,
-                    reqLength: item.length // Storing as decimal feet for backend
+                    reqLength: item.length 
                 };
                 activeQueue.push(queueEntry);
                 
-                // Quick inches conversion for the OneSignal text notification
                 let notificationInches = Math.round(item.length * 12);
                 summaryText += `${item.width}ft x ${notificationInches}in, `;
             });
 
-            // 4. Save to Firebase
-            await saveToServer(); 
-            
-            // 5. Clean up the screen for the next customer
             const totalSent = currentCustomerCart.length;
             currentCustomerCart = []; 
             customerInput.value = ''; 
-            
-            // CLEAN UP: Clear the length box and reset the Live Area
             valInput.value = ''; 
             document.getElementById('liveSqFt').innerText = '0.00';
             
+            await saveToServer(); 
+            renderUI();
             window.renderCart(); 
             showNotification(`Sent ${totalSent} requirement(s) to Godown screen!`, false);
             
-            // 6. Trigger OneSignal Notification
+            // Notification
             const oneSignalAppId = "f3b6b4a5-2fbd-417f-b990-14fa64d6d350";
             const oneSignalRestApiKey = atob("eDdvbXFjdDVnanZ3dGtiZGdwY3Zja3ZzdW92ZWNwbnJxNG5jZ3RibGg0N2V5N3ZrcTIzeXluaDJ2NDVyeHdiYnRzZm03aHByejUzcTQ3ZTRxemJ5a2k2bXFlMnk=");
-            
             const notificationPayload = {
                 app_id: oneSignalAppId,
                 included_segments: ["Active Subscriptions"], 
@@ -1160,324 +1195,363 @@
             try {
                 await fetch("https://onesignal.com/api/v1/notifications", {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json; charset=utf-8",
-                        "Authorization": `Basic ${oneSignalRestApiKey}`
-                    },
+                    headers: { "Content-Type": "application/json; charset=utf-8", "Authorization": `Basic ${oneSignalRestApiKey}` },
                     body: JSON.stringify(notificationPayload)
                 });
             } catch (error) {
                 console.error("Error triggering OneSignal:", error);
             }
         };
-            // --- DELETE / UNDO FUNCTION (CUSTOM MODAL) ---
-            let logToDelete = null; 
 
-            window.deleteCut = function(logTime) {
-                logToDelete = logTime; 
-                document.getElementById('deleteModal').style.display = 'flex'; 
-            };
 
-            window.closeModal = function() {
-                document.getElementById('deleteModal').style.display = 'none'; 
-                logToDelete = null; 
-            };
+        // --- DELETE CUT LOG ---
+        let logToDelete = null; 
+        window.deleteCut = function(logTime) {
+            logToDelete = logTime; 
+            document.getElementById('deleteModal').style.display = 'flex'; 
+        };
+        window.closeModal = function() {
+            document.getElementById('deleteModal').style.display = 'none'; 
+            logToDelete = null; 
+        };
+        window.confirmDeleteAction = async function() {
+            if (!logToDelete) return;
+            const logIndex = cutLogs.findIndex(log => log.time === logToDelete);
+            if (logIndex !== -1) {
+                cutLogs.splice(logIndex, 1);
+                await saveToServer(); 
+                renderUI();
+                showNotification("Log entry deleted successfully.", false);
+            }
+            window.closeModal(); 
+        };
 
-            window.confirmDeleteAction = async function() {
-                if (!logToDelete) return;
 
-                const logIndex = cutLogs.findIndex(log => log.time === logToDelete);
-                
-                if (logIndex !== -1) {
-                    cutLogs.splice(logIndex, 1);
-                    await saveToServer(); 
-                    showNotification("Log entry deleted successfully.", false);
-                }
-                
-                window.closeModal(); 
-            };
-// --- ADD MANUAL SCRAP / OFFCUT ---
+        // --- SCRAP LOGIC ---
         window.addManualScrap = async function() {
             const width = document.getElementById('manualScrapWidth').value;
             const inchesInput = document.getElementById('manualScrapInches').value;
             const lengthInches = parseFloat(inchesInput);
 
-            // 1. Validate the input
             if (isNaN(lengthInches) || lengthInches <= 0) {
                 showNotification("<strong>Error:</strong> Please enter a valid scrap length in inches.", true);
                 return;
             }
 
-            // 2. Convert inches to decimal feet for the database math
             const lengthFeet = parseFloat((lengthInches / 12).toFixed(2));
-
-            // 3. Generate a new official J- ID for this piece
             const newId = generateId();
 
-            // 4. Add it to the offcuts array
-            offcuts.push({ 
-                id: newId, 
-                width: width, 
-                length: lengthFeet 
-            });
-
-            // 5. Save to Firebase and clear the input box
+            offcuts.push({ id: newId, width: width, length: lengthFeet });
             await saveToServer();
+            renderUI();
+            
             document.getElementById('manualScrapInches').value = '';
             showNotification(`Added Scrap ${newId} (${width}ft × ${lengthInches}in) to inventory!`, false);
         };
 
-        // --- GODOWN CUT PROCESSING ---
-            window.processGodownCut = async function(orderId) {
-                const index = activeQueue.findIndex(o => o.id === orderId);
-                if (index === -1) return;
-                const order = activeQueue[index];
 
-                // 1. Get the worker's input in inches, then convert it back to feet for the database
-                const actualWidth = document.getElementById(`godownWidth_${orderId}`).value;
-                const actualLengthInches = parseFloat(document.getElementById(`godownLengthInches_${orderId}`).value);
-                const actualLengthFeet = parseFloat((actualLengthInches / 12).toFixed(2));
+        // --- GODOWN LOGIC ---
+        window.processGodownCut = async function(orderId) {
+            const index = activeQueue.findIndex(o => o.id === orderId);
+            if (index === -1) return;
+            const order = activeQueue[index];
 
-                // BUG FIX: Updated to check 'actualLengthFeet' instead of the old undefined variable
-                if (isNaN(actualLengthFeet) || actualLengthFeet <= 0 || actualLengthFeet > 12) {
-                    showNotification("<strong>Error:</strong> Godown entered an invalid cut length.", true);
-                    return;
-                }
+            const actualWidth = document.getElementById(`godownWidth_${orderId}`).value;
+            const actualLengthInches = parseFloat(document.getElementById(`godownLengthInches_${orderId}`).value);
+            const actualLengthFeet = parseFloat((actualLengthInches / 12).toFixed(2));
 
-                let logEntry = {
-                    time: new Date().toLocaleString(),
-                    customer: order.customer,
-                    width: actualWidth,
-                    length: actualLengthFeet,
-                    source: "",
-                    leftover: ""
-                };
-
-                // SMART DEDUCTION LOGIC BASED ON ACTUAL SIZE
-                    
-                    // 1. Filter offcuts by comparing EXACT INCHES to avoid decimal math glitches
-                    let validOffcuts = offcuts.filter(o => {
-                        let offcutInches = Math.round(parseFloat(o.length) * 12);
-                        return o.width === actualWidth && offcutInches >= actualLengthInches;
-                    });
-                    
-                    if (validOffcuts.length > 0) {
-                        // System finds the best offcut for the final size
-                        validOffcuts.sort((a, b) => parseFloat(a.length) - parseFloat(b.length));
-                        let bestPiece = validOffcuts[0];
-                        
-                        // 2. Do the deduction math in pure INCHES
-                        let originalInches = Math.round(parseFloat(bestPiece.length) * 12);
-                        let leftoverInches = originalInches - actualLengthInches;
-                        
-                        // 3. Save the exact new leftover back as feet for the database
-                        bestPiece.length = parseFloat((leftoverInches / 12).toFixed(2));
-                        
-                        logEntry.source = `Offcut ${bestPiece.id}`;
-                        logEntry.leftover = `${bestPiece.length} ft (${leftoverInches} in)`;
-                    } 
-                    else if (fullStock[actualWidth] > 0) {
-                        // System breaks a new full sheet
-                        fullStock[actualWidth] -= 1;
-                        
-                        // Break the new sheet using pure inches (144 inches = 12 ft)
-                        let remainderInches = 144 - actualLengthInches;
-                        let remainderFeet = parseFloat((remainderInches / 12).toFixed(2));
-                        
-                        if (remainderInches > 0) {
-                            let newId = generateId();
-                            offcuts.push({ id: newId, width: actualWidth, length: remainderFeet });
-                            
-                            logEntry.source = `New 12ft Piece`;
-                            logEntry.leftover = `Saved ${remainderFeet}ft (${remainderInches} in) as ${newId}`;
-                        } else {
-                            logEntry.source = `New 12ft Piece`;
-                            logEntry.leftover = `None`;
-                        }
-                    } else {
-                        showNotification(`<strong>Out of Stock!</strong> Cannot cut ${actualWidth}ft. Need a new 12ft sheet.`, true);
-                        return;
-                    }
-
-                // LOG IT AND REMOVE FROM QUEUE
-                cutLogs.push(logEntry);
-                activeQueue.splice(index, 1);
-                
-                // SAVE TO FIREBASE
-                await saveToServer();
-                showNotification("Cut processed and inventory updated!", false);
-            };
-        // --- GODOWN QUEUE DELETION (CUSTOM MODAL) ---
-            let godownOrderToDelete = null; // Memory for which item to delete
-
-            // 1. Opens the professional modal
-            window.deleteGodownOrder = function(orderId) {
-                godownOrderToDelete = orderId; 
-                document.getElementById('godownDeleteModal').style.display = 'flex'; 
-            };
-
-            // 2. Closes the modal if they click Cancel
-            window.closeGodownModal = function() {
-                document.getElementById('godownDeleteModal').style.display = 'none'; 
-                godownOrderToDelete = null; 
-            };
-
-            // 3. Actually deletes the item if they click "Yes, Delete"
-            window.confirmGodownDeleteAction = async function() {
-                if (!godownOrderToDelete) return;
-
-                const index = activeQueue.findIndex(o => o.id === godownOrderToDelete);
-                if (index !== -1) {
-                    activeQueue.splice(index, 1);
-                    await saveToServer();
-                    showNotification("Requirement deleted from godown queue.", false);
-                }
-                
-                window.closeGodownModal(); // Hide the modal after processing
-            };
-          // --- DELETE OFFCUT / SCRAP PIECE (CUSTOM MODAL) ---
-            let offcutToDelete = null; // Memory for which piece to delete
-
-            // 1. Opens the professional modal and sets the text
-            window.deleteOffcut = function(offcutId) {
-                offcutToDelete = offcutId; 
-                document.getElementById('offcutDeleteIdText').innerText = offcutId; // Put the ID in the warning text
-                document.getElementById('offcutDeleteModal').style.display = 'flex'; // Show the modal
-            };
-
-            // 2. Closes the modal if they click Cancel
-            window.closeOffcutModal = function() {
-                document.getElementById('offcutDeleteModal').style.display = 'none'; 
-                offcutToDelete = null; 
-            };
-
-            // 3. Actually deletes the item if they click "Yes, Delete"
-            window.confirmOffcutDelete = async function() {
-                if (!offcutToDelete) return;
-
-                const index = offcuts.findIndex(o => o.id === offcutToDelete);
-                
-                if (index !== -1) {
-                    offcuts.splice(index, 1); // Remove from array
-                    await saveToServer(); // Save to Firebase
-                    showNotification(`Scrap ${offcutToDelete} removed from inventory.`, false);
-                }
-                
-                window.closeOffcutModal(); // Hide the modal after processing
-            };
-            // --- LONG PRESS LOGIC FOR MOBILE ---
-            let pressTimer;
-
-            window.startLongPress = function(e, id) {
-                // If they hold their finger down for 600ms, trigger the menu
-                pressTimer = setTimeout(() => {
-                    // Trigger a tiny phone vibration if the device supports it
-                    if (navigator.vibrate) navigator.vibrate(50);
-                    
-                    // Close any other open overlays first
-                    document.querySelectorAll('[id^="delete-overlay-"]').forEach(el => el.style.display = 'none');
-                    document.querySelectorAll('[id^="row-"]').forEach(el => el.style.background = 'transparent');
-                    
-                    // Show the delete button for THIS specific row
-                    const overlay = document.getElementById(`delete-overlay-${id}`);
-                    if(overlay) {
-                        overlay.style.display = 'flex';
-                        document.getElementById(`row-${id}`).style.background = '#fef2f2'; // light red highlight
-                    }
-                }, 600); 
-            };
-
-            window.cancelLongPress = function() {
-                // If they lift their finger or scroll before 600ms, cancel the timer
-                clearTimeout(pressTimer);
-            };
-
-            window.hideDelete = function(id, e) {
-                // The "X" button to hide the menu again
-                if(e) e.stopPropagation();
-                const overlay = document.getElementById(`delete-overlay-${id}`);
-                if(overlay) {
-                    overlay.style.display = 'none';
-                    document.getElementById(`row-${id}`).style.background = 'transparent';
-                }
-            };
-            // --- DEALER DELIVERY LOG LOGIC ---
-        // 1. Create the array to hold the history (Make sure to add this to your Firebase save/load later!)
-        let dealerDeliveries = [];
-
-        // 2. Function to draw the log on the screen
-        window.renderDeliveryLog = function() {
-            const table = document.getElementById('deliveryLogTable');
-            if (!table) return;
-            
-            table.innerHTML = '';
-            
-            if (dealerDeliveries.length === 0) {
-                table.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#94a3b8; padding: 15px;">No recent deliveries logged.</td></tr>';
+            if (isNaN(actualLengthFeet) || actualLengthFeet <= 0 || actualLengthFeet > 12) {
+                showNotification("<strong>Error:</strong> Godown entered an invalid cut length.", true);
                 return;
             }
 
-            // Show newest deliveries at the top
-            const reversedLog = [...dealerDeliveries].reverse();
+            let logEntry = {
+                time: new Date().toLocaleString(),
+                customer: order.customer,
+                width: actualWidth,
+                length: actualLengthFeet,
+                source: "",
+                leftover: ""
+            };
 
-            reversedLog.forEach(entry => {
-                table.innerHTML += `
-                    <tr style="border-bottom: 1px solid #f1f5f9;">
-                        <td style="padding: 12px 8px; color: #475569; font-size: 14px;">${entry.date}</td>
-                        <td style="padding: 12px 8px; font-weight: bold; color: var(--navy);">${entry.width} ft</td>
-                        <td style="padding: 12px 8px;">
-                            <span style="background: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 13px;">
-                                +${entry.qty} Sheets
-                            </span>
-                        </td>
-                    </tr>
-                `;
+            let validOffcuts = offcuts.filter(o => {
+                let offcutInches = Math.round(parseFloat(o.length) * 12);
+                return o.width === actualWidth && offcutInches >= actualLengthInches;
             });
+            
+            if (validOffcuts.length > 0) {
+                validOffcuts.sort((a, b) => parseFloat(a.length) - parseFloat(b.length));
+                let bestPiece = validOffcuts[0];
+                let originalInches = Math.round(parseFloat(bestPiece.length) * 12);
+                let leftoverInches = originalInches - actualLengthInches;
+                bestPiece.length = parseFloat((leftoverInches / 12).toFixed(2));
+                
+                logEntry.source = `Offcut ${bestPiece.id}`;
+                logEntry.leftover = `${bestPiece.length} ft (${leftoverInches} in)`;
+            } 
+            else if (fullStock[actualWidth] > 0) {
+                fullStock[actualWidth] -= 1;
+                let remainderInches = 144 - actualLengthInches;
+                let remainderFeet = parseFloat((remainderInches / 12).toFixed(2));
+                
+                if (remainderInches > 0) {
+                    let newId = generateId();
+                    offcuts.push({ id: newId, width: actualWidth, length: remainderFeet });
+                    logEntry.source = `New 12ft Piece`;
+                    logEntry.leftover = `Saved ${remainderFeet}ft (${remainderInches} in) as ${newId}`;
+                } else {
+                    logEntry.source = `New 12ft Piece`;
+                    logEntry.leftover = `None`;
+                }
+            } else {
+                showNotification(`<strong>Out of Stock!</strong> Cannot cut ${actualWidth}ft. Need a new 12ft sheet.`, true);
+                return;
+            }
+
+            cutLogs.push(logEntry);
+            activeQueue.splice(index, 1);
+            
+            await saveToServer();
+            renderUI();
+            showNotification("Cut processed and inventory updated!", false);
         };
 
-        // 3. Function to clear the log after settling the month's account
-       // --- PROFESSIONAL DEALER LOG MODAL LOGIC ---
+        let godownOrderToDelete = null; 
+        window.deleteGodownOrder = function(orderId) {
+            godownOrderToDelete = orderId; 
+            document.getElementById('godownDeleteModal').style.display = 'flex'; 
+        };
+        window.closeGodownModal = function() {
+            document.getElementById('godownDeleteModal').style.display = 'none'; 
+            godownOrderToDelete = null; 
+        };
+        window.confirmGodownDeleteAction = async function() {
+            if (!godownOrderToDelete) return;
+            const index = activeQueue.findIndex(o => o.id === godownOrderToDelete);
+            if (index !== -1) {
+                activeQueue.splice(index, 1);
+                await saveToServer();
+                renderUI();
+                showNotification("Requirement deleted from godown queue.", false);
+            }
+            window.closeGodownModal(); 
+        };
 
-        // 1. Opens the custom modal instead of the ugly browser alert
+        let offcutToDelete = null; 
+        window.deleteOffcut = function(offcutId) {
+            offcutToDelete = offcutId; 
+            document.getElementById('offcutDeleteIdText').innerText = offcutId; 
+            document.getElementById('offcutDeleteModal').style.display = 'flex'; 
+        };
+        window.closeOffcutModal = function() {
+            document.getElementById('offcutDeleteModal').style.display = 'none'; 
+            offcutToDelete = null; 
+        };
+        window.confirmOffcutDelete = async function() {
+            if (!offcutToDelete) return;
+            const index = offcuts.findIndex(o => o.id === offcutToDelete);
+            if (index !== -1) {
+                offcuts.splice(index, 1); 
+                await saveToServer(); 
+                renderUI();
+                showNotification(`Scrap ${offcutToDelete} removed from inventory.`, false);
+            }
+            window.closeOffcutModal(); 
+        };
+
+
+        // --- LONG PRESS GESTURES ---
+        let pressTimer;
+        window.startLongPress = function(e, id) {
+            pressTimer = setTimeout(() => {
+                if (navigator.vibrate) navigator.vibrate(50);
+                document.querySelectorAll('[id^="delete-overlay-"]').forEach(el => el.style.display = 'none');
+                document.querySelectorAll('[id^="row-"]').forEach(el => el.style.background = 'transparent');
+                
+                const overlay = document.getElementById(`delete-overlay-${id}`);
+                if(overlay) {
+                    overlay.style.display = 'flex';
+                    document.getElementById(`row-${id}`).style.background = '#fef2f2';
+                }
+            }, 600); 
+        };
+        window.cancelLongPress = function() {
+            clearTimeout(pressTimer);
+        };
+        window.hideDelete = function(id, e) {
+            if(e) e.stopPropagation();
+            const overlay = document.getElementById(`delete-overlay-${id}`);
+            if(overlay) {
+                overlay.style.display = 'none';
+                document.getElementById(`row-${id}`).style.background = 'transparent';
+            }
+        };
+
+
+        // --- DEALER DELIVERY LOG (GROUPED BY DAY) ---
+        window.renderDeliveryLog = function() {
+            const container = document.getElementById('deliveryLogTable');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            if (dealerDeliveries.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:#94a3b8; padding: 25px; font-weight: bold;">No deliveries logged.</div>';
+                return;
+            }
+
+            // 1. Group records by exact Date
+            const groupedData = {};
+            dealerDeliveries.forEach(entry => {
+                // Extracts the date part from our unbreakable ID (DEL-15-8-2026-3.5)
+                const idParts = entry.id.split('-');
+                if(idParts.length >= 4) {
+                    const dateKey = `${idParts[1]}/${idParts[2]}/${idParts[3]}`; 
+                    if (!groupedData[dateKey]) groupedData[dateKey] = [];
+                    groupedData[dateKey].push(entry);
+                }
+            });
+
+            // 2. Sort the dates from Newest to Oldest
+            const sortedDates = Object.keys(groupedData).sort((a, b) => {
+                const aParts = a.split('/');
+                const bParts = b.split('/');
+                // Format: YYYY, MM (0-indexed), DD
+                const dateA = new Date(aParts[2], parseInt(aParts[1]) - 1, aParts[0]);
+                const dateB = new Date(bParts[2], parseInt(bParts[1]) - 1, bParts[0]);
+                return dateB - dateA;
+            });
+
+            // 3. Build Professional Daily Cards
+            let finalHTML = '';
+            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+            sortedDates.forEach(dateStr => {
+                const items = groupedData[dateStr];
+                
+                // Make the date look highly professional (e.g., "15 Aug 2026")
+                const dParts = dateStr.split('/');
+                const premiumDateText = `${dParts[0]} ${months[parseInt(dParts[1]) - 1]} ${dParts[2]}`;
+                
+                // Calculate total sheets dropped off that day
+                const dailyTotal = items.reduce((sum, item) => sum + parseInt(item.qty), 0);
+
+                finalHTML += `
+                <div style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 15px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
+                    
+                    <!-- Card Header (Date & Total) -->
+                    <div style="background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center;">
+                        <strong style="color: var(--navy); font-size: 15px;">📅 ${premiumDateText}</strong>
+                        <span style="background: var(--navy); color: white; padding: 4px 10px; border-radius: 6px; font-size: 13px; font-weight: bold;">
+                            Total: ${dailyTotal}
+                        </span>
+                    </div>
+
+                    <!-- Items List -->
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tbody>`;
+                
+                // Sort widths lowest to highest inside the card
+                items.sort((a, b) => parseFloat(a.width) - parseFloat(b.width));
+                
+                items.forEach((entry, idx) => {
+                    const borderStr = idx === items.length - 1 ? '' : 'border-bottom: 1px solid #f1f5f9;';
+                    finalHTML += `
+                            <tr style="${borderStr}">
+                                <td style="padding: 12px 15px; color: #475569; width: 60%;">
+                                    <span style="font-weight: 800; color: var(--navy); font-size: 16px;">${entry.width} ft</span> <span style="font-size: 13px;">width sheets</span>
+                                </td>
+                                <td style="padding: 12px 15px; text-align: right;">
+                                    <span style="background: #dcfce7; color: #166534; padding: 6px 12px; border-radius: 6px; font-weight: 800; font-size: 15px; box-shadow: inset 0 0 0 1px #bbf7d0;">
+                                        +${entry.qty}
+                                    </span>
+                                </td>
+                            </tr>`;
+                });
+                
+                finalHTML += `
+                        </tbody>
+                    </table>
+                </div>`;
+            });
+
+            container.innerHTML = finalHTML;
+        };
+
+
+        // --- MANUAL PAST PURCHASE LOGIC ---
+        window.addManualDelivery = async function() {
+            const dateInput = document.getElementById('manualDeliveryDate').value;
+            const width = document.getElementById('manualDeliveryWidth').value;
+            const qty = parseInt(document.getElementById('manualDeliveryQty').value);
+            const addToLiveStock = document.getElementById('addPastToLiveStock').checked;
+
+            if (!dateInput || isNaN(qty) || qty <= 0) {
+                showNotification("<strong>Error:</strong> Please select a valid Date and Quantity.", true);
+                return;
+            }
+
+            // Convert browser date (YYYY-MM-DD) into our strict matching numbers
+            const dateParts = dateInput.split('-');
+            const yyyy = dateParts[0];
+            const mm = parseInt(dateParts[1], 10); // Removes the zero so '08' becomes '8'
+            const dd = parseInt(dateParts[2], 10);
+            
+            // Generate the exact unbreakable ID so it perfectly groups with any existing data
+            const manualId = `DEL-${dd}-${mm}-${yyyy}-${width}`;
+            
+            // Format a display string
+            const displayDate = `${String(dd).padStart(2, '0')}/${String(mm).padStart(2, '0')}/${yyyy} (Manual)`;
+
+            // 1. Log it in the Ledger
+            let existingEntry = dealerDeliveries.find(entry => entry.id === manualId);
+            if (existingEntry) {
+                existingEntry.qty += qty;
+                existingEntry.date = displayDate; 
+            } else {
+                dealerDeliveries.push({ id: manualId, date: displayDate, width: width, qty: qty });
+            }
+
+            // 2. Add to actual cutting stock (Only if they left the box checked!)
+            if (addToLiveStock && fullStock[width] !== undefined) {
+                fullStock[width] += qty;
+            }
+
+            // 3. Reset UI & Save
+            document.getElementById('manualDeliveryQty').value = '1';
+            
+            renderUI(); 
+            window.renderDeliveryLog(); 
+            saveToServer(); 
+            
+            showNotification(`Past purchase logged for ${dd}/${mm}/${yyyy}!`, false);
+        };
         window.clearDeliveryLog = function() {
             document.getElementById('dealerLogModal').style.display = 'flex';
         };
-
-        // 2. Closes the modal if they click Cancel
         window.closeDealerLogModal = function() {
             document.getElementById('dealerLogModal').style.display = 'none';
         };
-
-        // 3. Actually clears the log if they click "Yes, Clear Log"
         window.confirmClearDealerLog = async function() {
             dealerDeliveries = [];
-            await saveToServer(); // Save the wiped array to Firebase
-            window.renderDeliveryLog(); // Update the screen so it shows empty
+            await saveToServer(); 
+            window.renderDeliveryLog(); 
             showNotification("Delivery log cleared for the new month.", false);
-            
-            window.closeDealerLogModal(); // Hide the modal after processing
+            window.closeDealerLogModal(); 
         };
+
+
         // --- NATIVE APP NAVIGATION LOGIC ---
         window.switchPage = function(pageId, btnElement) {
-            // 1. Hide all pages
             document.querySelectorAll('.app-page').forEach(page => {
                 page.classList.remove('active');
             });
-            
-            // 2. Remove 'active' styling from all bottom menu buttons
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            
-            // 3. Show the requested page with a smooth fade-in
             document.getElementById(pageId).classList.add('active');
-            
-            // 4. Highlight the clicked menu button in Navy Blue
             btnElement.classList.add('active');
-            
-            // 5. Instantly snap scroll back to the top for the new page
             window.scrollTo({ top: 0, behavior: 'auto' });
         };
-        </script>
+</script>
     </body>
     </html>
