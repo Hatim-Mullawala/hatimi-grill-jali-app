@@ -505,6 +505,10 @@
                     </div>
                 </div>          
                 
+                 <!-- NEW: UPSELL SUGGESTION BOX -->
+                        <div id="scrapSuggestionBox" style="margin-top: 8px; min-height: 20px;"></div>
+                    </div>
+
                 <!-- TEMPORARY CART FOR CURRENT CUSTOMER -->
                 <div id="customerCart" style="margin-top: 15px; display: none; background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
                     <h4 style="margin-top: 0; margin-bottom: 10px; color: var(--navy);">Sizes to Send:</h4>
@@ -516,8 +520,8 @@
     </div>
 
 
-    <!-- ========================================== -->
-    <!-- 📄 PAGE 2: INVENTORY MANAGER               -->
+   <!-- ========================================== -->
+    <!-- 📦 PAGE 2: INVENTORY MANAGER               -->
     <!-- ========================================== -->
     <div id="page-inventory" class="app-page">
         <div class="grid-layout">
@@ -546,13 +550,12 @@
                 <h3>Offcut Bin (Leftovers)</h3>
                 
                 <!-- Manual Scrap Entry Tool -->
-                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin: 15px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin: 15px 0; display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
                     <div style="font-size: 14px; font-weight: bold; color: var(--navy);">
                         ➕ Add Scrap:
                     </div>
                     
                     <div style="display: flex; gap: 10px; flex: 1; min-width: 250px;">
-                        <!-- Scrap Width -->
                         <select id="manualScrapWidth" class="modern-select" style="height: 45px; flex: 1; min-width: 100px; background-color: white;">
                             <option value="2">2 ft</option>
                             <option value="2.5">2.5 ft</option>
@@ -562,7 +565,6 @@
                             <option value="5">5 ft</option>
                         </select>
                         
-                        <!-- Scrap Length -->
                         <div style="display: flex; height: 45px; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; box-sizing: border-box; background: white; flex: 1; min-width: 120px;">
                             <input type="number" id="manualScrapInches" placeholder="Size" step="1" style="flex: 1; width: 100%; height: 100%; padding: 10px 15px; border: none; font-size: 16px; font-weight: bold; outline: none; box-sizing: border-box;">
                             <div style="background: #f8fafc; border-left: 1px solid #cbd5e1; padding: 0 15px; display: flex; align-items: center; font-weight: bold; font-size: 14px; color: #94a3b8;">
@@ -576,24 +578,14 @@
                     </button>
                 </div>
 
-                <!-- MAGIC SCROLL WRAPPER FOR OFFCUTS -->
-                <div class="scrollable-table-container">
-                    <table class="sticky-header" style="width: 100%; border-collapse: collapse; text-align: left;">
-                        <thead>
-                            <tr>
-                                <th style="padding-bottom: 10px;">Piece ID</th>
-                                <th style="padding-bottom: 10px;">Width</th>
-                                <th style="padding-bottom: 10px;">Remaining Length</th>
-                            </tr>
-                        </thead>
-                        <tbody id="offcutTable"></tbody>
-                    </table>
+                <!-- NEW: MODERN OFFCUT GRID CONTAINER -->
+                <div id="offcutGridContainer" style="max-height: 500px; overflow-y: auto; padding-right: 5px;">
+                    <!-- JS will draw grouped grids here -->
                 </div>
             </div>
-        </div>
-    </div>
-
-
+            
+        </div> <!-- PERFECTLY CLOSED grid-layout -->
+    </div> <!-- PERFECTLY CLOSED page-inventory -->
  <!-- ========================================== -->
     <!-- 📄 PAGE 3: HISTORY & LEDGERS               -->
     <!-- ========================================== -->
@@ -819,7 +811,7 @@
         };
 
 
-        // --- SMART CALCULATOR (SINGLE BOX) ---
+       // --- SMART CALCULATOR (SINGLE BOX) ---
         const inputValue = document.getElementById('reqLengthValue');
         const inputUnit = document.getElementById('reqLengthUnit');
         const inputWidth = document.getElementById('reqWidth');
@@ -832,17 +824,88 @@
             
             const ft = unit === 'in' ? val / 12 : val;
             displaySqFt.innerText = (width * ft).toFixed(2);
+            
+            // 🚀 Trigger the Upsell Engine every time you type!
+            window.checkScrapSuggestions();
+        };
+
+      // --- NEW: SMART UPSELL LOGIC (MOBILE CHIP DESIGN) ---
+        window.checkScrapSuggestions = function() {
+            const suggestionBox = document.getElementById('scrapSuggestionBox');
+            if (!suggestionBox) return; 
+            
+            const width = parseFloat(inputWidth.value);
+            const val = parseFloat(inputValue.value);
+            const unit = inputUnit.value;
+            
+            if (isNaN(val) || val <= 0) {
+                suggestionBox.innerHTML = '';
+                return;
+            }
+
+            const requestedInches = unit === 'in' ? val : val * 12;
+
+            // 1. Find ALL offcuts that match the requested width
+            let validOffcuts = offcuts.filter(o => parseFloat(o.width) === width);
+
+            if (validOffcuts.length === 0) {
+                suggestionBox.innerHTML = '';
+                return;
+            }
+
+            // 2. Sort by closest match
+            validOffcuts.sort((a, b) => {
+                let inchesA = Math.round(parseFloat(a.length) * 12);
+                let inchesB = Math.round(parseFloat(b.length) * 12);
+                return Math.abs(inchesA - requestedInches) - Math.abs(inchesB - requestedInches);
+            });
+
+            // 3. Build a horizontal scrolling "Chip" layout 
+            let suggestionsHTML = `
+                <div style="font-size: 11px; font-weight: 800; color: #64748b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+                    Available Scrap Pieces (${width}ft):
+                </div>
+                <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; white-space: nowrap; scrollbar-width: none; -ms-overflow-style: none;">
+            `;
+            
+            validOffcuts.forEach((piece, index) => { 
+                let scrapInches = Math.round(parseFloat(piece.length) * 12);
+                let diff = scrapInches - requestedInches;
+                
+                // Keep the flex-shrink to 0 so the chips don't crush on small screens
+                if (index === 0) {
+                    if (diff === 0) {
+                        suggestionsHTML += `<div onclick="window.applySuggestion(${scrapInches})" style="flex: 0 0 auto; background: #ecfdf5; color: #059669; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; border: 1px solid #10b981; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.1);">✨ Exact Match: ${scrapInches}"</div>`;
+                    } else if (diff > 0 && diff <= 12) {
+                        suggestionsHTML += `<div onclick="window.applySuggestion(${scrapInches})" style="flex: 0 0 auto; background: #fffbeb; color: #b45309; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; border: 1px solid #f59e0b; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.1);">💡 Upsell: ${scrapInches}"</div>`;
+                    } else {
+                        suggestionsHTML += `<div onclick="window.applySuggestion(${scrapInches})" style="flex: 0 0 auto; background: #f8fafc; color: #0f172a; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid #cbd5e1;">🎯 Best Fit: ${scrapInches}"</div>`;
+                    }
+                } else {
+                    suggestionsHTML += `<div onclick="window.applySuggestion(${scrapInches})" style="flex: 0 0 auto; background: white; color: #64748b; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid #e2e8f0;">${scrapInches}" (ID: ${piece.id})</div>`;
+                }
+            });
+            
+            suggestionsHTML += `</div>`;
+            suggestionBox.innerHTML = suggestionsHTML;
+        };
+
+        window.applySuggestion = function(inches) {
+            // Instantly switches to inches and pastes the larger size
+            document.getElementById('reqLengthUnit').value = 'in';
+            document.getElementById('reqLengthValue').value = inches;
+            window.updateLiveSqFt(); 
         };
 
         if (inputValue) inputValue.addEventListener('input', window.updateLiveSqFt);
         if (inputUnit) inputUnit.addEventListener('change', window.updateLiveSqFt);
         if (inputWidth) inputWidth.addEventListener('change', window.updateLiveSqFt);
-        inputWidth.addEventListener('input', window.updateLiveSqFt);    
+        if (inputWidth) inputWidth.addEventListener('input', window.updateLiveSqFt);
 
 
-        // --- MASTER UI RENDERER ---
+       // --- MASTER UI RENDERER ---
         function renderUI() {
-            // Draw Godown Queue
+            // 1. Draw Godown Queue
             const queueContainer = document.getElementById('godownQueue');
             if(queueContainer) {
                 queueContainer.innerHTML = '';
@@ -871,6 +934,23 @@
                             const borderStyle = isLast ? '' : 'border-bottom: 1px dashed #cbd5e1; padding-bottom: 15px;';
                             const lengthInches = Math.round(parseFloat(order.reqLength) * 12);
                             
+                            // 🚀 NEW: AUTO-CALCULATE WHICH PIECE THE GODOWN SHOULD USE
+                            let expectedSource = "✨ New 12ft Sheet";
+                            let validOffcuts = offcuts.filter(o => {
+                                let offcutInches = Math.round(parseFloat(o.length) * 12);
+                                return parseFloat(o.width) === parseFloat(order.reqWidth) && offcutInches >= lengthInches;
+                            });
+
+                            if (validOffcuts.length > 0) {
+                                // Find the closest fitting scrap piece
+                                validOffcuts.sort((a, b) => parseFloat(a.length) - parseFloat(b.length));
+                                let pieceInches = Math.round(parseFloat(validOffcuts[0].length) * 12);
+                                expectedSource = `♻️ Scrap ${validOffcuts[0].id} (${pieceInches}in)`;
+                            } else if (fullStock[order.reqWidth] <= 0) {
+                                expectedSource = "⚠️ OUT OF STOCK";
+                            }
+                            // END AUTO-CALCULATE
+
                             cardHTML += `
                                 <div style="display: flex; flex-direction: column; gap: 12px; width: 100%; ${borderStyle}">
                                     <div style="display: flex; flex-direction: column; gap: 2px;">
@@ -880,6 +960,13 @@
                                             <span style="color: #cbd5e1; margin: 0 4px; font-weight: normal;">×</span> 
                                             <span style="color: #ef4444; font-size: 22px;">${lengthInches}</span> <span style="font-size: 14px; color: #94a3b8; font-weight: 500;">inches</span>
                                         </div>
+                                        
+                                        <!-- NEW: TARGET MATERIAL INSTRUCTION BOX -->
+                                        <div style="background: #f1f5f9; padding: 8px 12px; border-radius: 6px; margin-top: 8px; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between;">
+                                            <span style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Pick Material:</span>
+                                            <span style="font-size: 14px; font-weight: 800; color: ${expectedSource.includes('Scrap') ? '#d97706' : 'var(--navy)'};">${expectedSource}</span>
+                                        </div>
+                                        
                                     </div>
                                     <div style="background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 10px;">
                                         <div style="font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px;">CONFIRM ACTUAL CUT:</div>
@@ -912,7 +999,7 @@
                 }
             }
 
-            // Draw Full Stock
+            // 2. Draw Full Stock
             const stockBody = document.getElementById('fullStockTable');
             if(stockBody) {
                 stockBody.innerHTML = '';
@@ -933,44 +1020,73 @@
                 });
             }
 
-            // Draw Offcuts
-            const offcutBody = document.getElementById('offcutTable');
-            if(offcutBody) {
-                offcutBody.innerHTML = '';
-                let sortedOffcuts = [...offcuts].sort((a, b) => a.width - b.width || a.length - b.length);
-                if(sortedOffcuts.length === 0) {
-                    offcutBody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#999; padding: 15px;">No offcuts available.</td></tr>';
+           // 3. Draw Offcuts (GROUPED BY WIDTH - MODERN GRID)
+            const offcutContainer = document.getElementById('offcutGridContainer');
+
+            if(offcutContainer) {
+                offcutContainer.innerHTML = '';
+                
+                if(offcuts.length === 0) {
+                    offcutContainer.innerHTML = '<div style="text-align:center; color:#94a3b8; padding: 30px; font-weight: bold; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;">No offcuts in inventory.</div>';
                 } else {
-                    sortedOffcuts.forEach(item => {
-                        const offcutInches = Math.round(parseFloat(item.length) * 12);
-                        offcutBody.innerHTML += `
-                            <tr id="row-${item.id}" 
-                                ontouchstart="window.startLongPress(event, '${item.id}')" 
-                                ontouchend="window.cancelLongPress()" 
-                                ontouchmove="window.cancelLongPress()"
-                                onmousedown="window.startLongPress(event, '${item.id}')"
-                                onmouseup="window.cancelLongPress()"
-                                onmouseleave="window.cancelLongPress()"
-                                style="position: relative; transition: background 0.2s;">
-                                
-                                <td style="padding: 12px 8px; vertical-align: middle;"><span style="color:var(--navy); font-weight:bold;">${item.id}</span></td>
-                                <td style="padding: 12px 8px; vertical-align: middle;">${item.width} ft</td>
-                                <td style="padding: 12px 8px; vertical-align: middle;">
-                                    <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-start;">
-                                        <span style="background: #e2e8f0; color: #475569; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 13px;">${item.length} ft</span>
-                                        <span style="color: #64748b; font-size: 12px; font-weight: bold; padding-left: 4px;">(${offcutInches} in)</span>
+                    // 1. Group the offcuts by their Width
+                    const groupedOffcuts = {};
+                    offcuts.forEach(item => {
+                        if (!groupedOffcuts[item.width]) groupedOffcuts[item.width] = [];
+                        groupedOffcuts[item.width].push(item);
+                    });
+
+                    // 2. Sort the groups from smallest width to largest
+                    const sortedWidths = Object.keys(groupedOffcuts).sort((a, b) => parseFloat(a) - parseFloat(b));
+
+                    sortedWidths.forEach(width => {
+                        let widthGroupHTML = `
+                        <div style="margin-bottom: 20px;">
+                            <!-- Header for this Width Group -->
+                            <div style="background: var(--navy); color: white; padding: 8px 15px; border-radius: 8px 8px 0 0; font-size: 14px; font-weight: 800; display: flex; justify-content: space-between; align-items: center;">
+                                <span>📐 ${width} ft Width</span>
+                                <span style="background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 12px; font-size: 12px;">${groupedOffcuts[width].length} pieces</span>
+                            </div>
+                            
+                            <!-- Smart CSS Grid for the Cards -->
+                            <div style="border: 1px solid #cbd5e1; border-top: none; border-radius: 0 0 8px 8px; padding: 15px; background: white; display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px;">
+                        `;
+
+                        // 3. Sort pieces from smallest to largest length
+                        groupedOffcuts[width].sort((a, b) => parseFloat(a.length) - parseFloat(b.length));
+
+                        groupedOffcuts[width].forEach(item => {
+                            const offcutInches = Math.round(parseFloat(item.length) * 12);
+                            
+                            widthGroupHTML += `
+                                <div id="row-${item.id}" 
+                                    ontouchstart="window.startLongPress(event, '${item.id}')" 
+                                    ontouchend="window.cancelLongPress()" 
+                                    ontouchmove="window.cancelLongPress()"
+                                    onmousedown="window.startLongPress(event, '${item.id}')"
+                                    onmouseup="window.cancelLongPress()"
+                                    onmouseleave="window.cancelLongPress()"
+                                    style="position: relative; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 15px 10px; text-align: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.02); overflow: hidden;">
+                                    
+                                    <div style="color: #64748b; font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 4px;">${item.id}</div>
+                                    <div style="color: #ef4444; font-size: 20px; font-weight: 800; margin-bottom: 2px;">${offcutInches}<span style="font-size: 13px; color: #94a3b8; font-weight: 600;"> in</span></div>
+                                    <div style="color: #94a3b8; font-size: 11px; font-weight: 600;">(${item.length} ft)</div>
+
+                                    <!-- HIDDEN DELETE OVERLAY (Activates on Long Press) -->
+                                    <div id="delete-overlay-${item.id}" style="display: none; position: absolute; top: 0; left: 0; height: 100%; width: 100%; background: rgba(254, 242, 242, 0.95); flex-direction: column; align-items: center; justify-content: center; gap: 8px; backdrop-filter: blur(1px);">
+                                        <button onclick="window.deleteOffcut('${item.id}')" style="background: #ef4444; color: white; border: none; border-radius: 4px; padding: 6px 12px; font-weight: bold; font-size: 12px; cursor: pointer; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);">🗑️ Delete</button>
+                                        <button onclick="window.hideDelete('${item.id}', event)" style="background: transparent; color: #64748b; border: none; font-size: 11px; cursor: pointer; font-weight: bold;">✖ Cancel</button>
                                     </div>
-                                    <div id="delete-overlay-${item.id}" style="display: none; position: absolute; top: 0; right: 0; height: 100%; width: 100%; padding: 0 10px; background: rgba(254, 242, 242, 0.95); align-items: center; justify-content: flex-end; border-radius: 4px; box-shadow: inset 4px 0 10px rgba(0,0,0,0.05);">
-                                        <button onclick="window.deleteOffcut('${item.id}')" style="background: #ef4444; color: white; border: none; border-radius: 6px; padding: 8px 16px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3); cursor: pointer;">🗑️ Delete</button>
-                                        <button onclick="window.hideDelete('${item.id}', event)" style="background: transparent; color: #64748b; border: none; font-size: 16px; margin-left: 15px; padding: 10px; cursor: pointer;">✖</button>
-                                    </div>
-                                </td>
-                            </tr>`;
+                                </div>
+                            `;
+                        });
+
+                        widthGroupHTML += `</div></div>`;
+                        offcutContainer.innerHTML += widthGroupHTML;
                     });
                 }
             }
-
-            // Draw Logs
+            // 4. Draw Logs
             const logBody = document.getElementById('logTable');
             if(logBody) {
                 logBody.innerHTML = '';
@@ -996,7 +1112,6 @@
                 }
             }
         }
-
 
         // --- HELPERS ---
         function generateId() {
@@ -1083,6 +1198,7 @@
             
             valInput.value = ''; 
             document.getElementById('liveSqFt').innerText = '0.00';
+            document.getElementById('scrapSuggestionBox').innerHTML = '';
             
             window.renderCart();
             saveToServer(); // Background save cache
@@ -1136,7 +1252,7 @@
             saveToServer();
         };
 
-        // --- GODOWN SENDING ---
+// --- GODOWN SENDING ---
         window.processSmartCut = async function() {
             const valInput = document.getElementById('reqLengthValue');
             const val = parseFloat(valInput.value);
@@ -1177,6 +1293,9 @@
             valInput.value = ''; 
             document.getElementById('liveSqFt').innerText = '0.00';
             
+            // NEW: Hide the gold upsell button after sending to Godown!
+            document.getElementById('scrapSuggestionBox').innerHTML = '';
+            
             await saveToServer(); 
             renderUI();
             window.renderCart(); 
@@ -1202,7 +1321,6 @@
                 console.error("Error triggering OneSignal:", error);
             }
         };
-
 
         // --- DELETE CUT LOG ---
         let logToDelete = null; 
@@ -1249,8 +1367,7 @@
             showNotification(`Added Scrap ${newId} (${width}ft × ${lengthInches}in) to inventory!`, false);
         };
 
-
-        // --- GODOWN LOGIC ---
+// --- GODOWN LOGIC ---
         window.processGodownCut = async function(orderId) {
             const index = activeQueue.findIndex(o => o.id === orderId);
             if (index === -1) return;
@@ -1274,9 +1391,11 @@
                 leftover: ""
             };
 
+            // THE FIX: Force both the offcut width and the dropdown width to be Numbers (parseFloat) 
+            // so they always match, whether they came from Google Sheets or the screen!
             let validOffcuts = offcuts.filter(o => {
                 let offcutInches = Math.round(parseFloat(o.length) * 12);
-                return o.width === actualWidth && offcutInches >= actualLengthInches;
+                return parseFloat(o.width) === parseFloat(actualWidth) && offcutInches >= actualLengthInches;
             });
             
             if (validOffcuts.length > 0) {
