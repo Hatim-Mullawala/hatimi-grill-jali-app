@@ -505,9 +505,8 @@
                     </div>
                 </div>          
                 
-                 <!-- NEW: UPSELL SUGGESTION BOX -->
-                        <div id="scrapSuggestionBox" style="margin-top: 8px; min-height: 20px;"></div>
-                    </div>
+                <!-- THE NEW FULL-WIDTH SCROLLING SUGGESTION ROW -->
+<div id="scrapSuggestionBox" style="width: 100%; max-width: 100%; overflow: hidden; box-sizing: border-box; margin-bottom: 15px;"></div>
 
                 <!-- TEMPORARY CART FOR CURRENT CUSTOMER -->
                 <div id="customerCart" style="margin-top: 15px; display: none; background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
@@ -861,11 +860,12 @@
             });
 
             // 3. Build a horizontal scrolling "Chip" layout 
+            // 3. Build a horizontal scrolling "Chip" layout 
             let suggestionsHTML = `
                 <div style="font-size: 11px; font-weight: 800; color: #64748b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
                     Available Scrap Pieces (${width}ft):
                 </div>
-                <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; white-space: nowrap; scrollbar-width: none; -ms-overflow-style: none;">
+                <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; width: 100%; max-width: 100%; white-space: nowrap; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch;">
             `;
             
             validOffcuts.forEach((piece, index) => { 
