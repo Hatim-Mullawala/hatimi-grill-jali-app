@@ -734,11 +734,15 @@
         // ==========================================
         
         const GOOGLE_APP_URL = "https://script.google.com/macros/s/AKfycby3Mq3QKfFo5ekPZlmAm-P-lbdE5i8xCTsuTFo_12-4kBGbyMukKDhPAd3v9WBSXepmvA/exec";
-let saveTimeout = null; 
+        
+        let saveTimeout = null; 
+        let isSyncing = false; // 🚀 NEW: The Sync Lock
 
-        // 1. SAVE TO CLOUD (NOW INCLUDES QUEUE AND LOGS)
+        // 1. SAVE TO CLOUD
         window.saveToServer = async function() {
             if (saveTimeout) clearTimeout(saveTimeout);
+            
+            isSyncing = true; // Lock the auto-scanner from running
             
             saveTimeout = setTimeout(async () => {
                 try {
@@ -746,8 +750,8 @@ let saveTimeout = null;
                         fullStock: fullStock,
                         offcuts: offcuts,
                         dealerDeliveries: dealerDeliveries,
-                        activeQueue: activeQueue, // Sent to cloud for Godown Phone!
-                        cutLogs: cutLogs          // Sent to cloud for permanent record!
+                        activeQueue: activeQueue, 
+                        cutLogs: cutLogs          
                     };
                     
                     await fetch(GOOGLE_APP_URL, {
@@ -759,23 +763,34 @@ let saveTimeout = null;
                     console.log("Cloud Save Successful");
                 } catch (error) {
                     console.error("Cloud Sync Failed:", error);
+                } finally {
+                    isSyncing = false; // Unlock the scanner after saving is completely finished
                 }
             }, 800); 
         };
 
-        // 2. LOAD FROM CLOUD (WITH SILENT REFRESH)
+        // 2. LOAD FROM CLOUD 
         window.loadFromServer = async function(isSilent = false) {
+            // 🚀 NEW: If the scanner tries to run while a save is happening, ignore it!
+            if (isSilent && isSyncing) {
+                console.log("Auto-Scanner Paused: Waiting for save to finish...");
+                return; 
+            }
+
             try {
                 if (!isSilent) showNotification("Syncing with Cloud Database...", false);
 
                 const response = await fetch(GOOGLE_APP_URL, { redirect: 'follow' });
                 const data = await response.json();
 
+                // 🚀 NEW: Double-check that a user didn't click save WHILE we were downloading
+                if (isSilent && isSyncing) return; 
+
                 if (data.fullStock) fullStock = data.fullStock;
                 if (data.offcuts) offcuts = data.offcuts;
                 if (data.dealerDeliveries) dealerDeliveries = data.dealerDeliveries;
-                if (data.activeQueue) activeQueue = data.activeQueue; // Pull Godown orders!
-                if (data.cutLogs) cutLogs = data.cutLogs;             // Pull daily logs!
+                if (data.activeQueue) activeQueue = data.activeQueue; 
+                if (data.cutLogs) cutLogs = data.cutLogs;             
 
                 renderUI();
                 if(typeof window.renderCart === 'function') window.renderCart();
@@ -792,14 +807,11 @@ let saveTimeout = null;
         window.onload = function() {
             window.loadFromServer(false);
             
-            // 🚀 NEW: THE AUTO-SCANNER
-            // Checks Google Sheets silently in the background every 15 seconds
-            // so the Godown employee's phone automatically updates without them touching it.
+            // THE AUTO-SCANNER
             setInterval(() => {
                 window.loadFromServer(true);
             }, 15000); 
         };
-
        // --- SMART CALCULATOR (SINGLE BOX) ---
         const inputValue = document.getElementById('reqLengthValue');
         const inputUnit = document.getElementById('reqLengthUnit');
@@ -893,7 +905,7 @@ let saveTimeout = null;
         if (inputWidth) inputWidth.addEventListener('input', window.updateLiveSqFt);
 
 
-       // --- MASTER UI RENDERER ---
+// --- MASTER UI RENDERER ---
         function renderUI() {
             // 1. Draw Godown Queue
             const queueContainer = document.getElementById('godownQueue');
@@ -924,21 +936,19 @@ let saveTimeout = null;
                             const borderStyle = isLast ? '' : 'border-bottom: 1px dashed #cbd5e1; padding-bottom: 15px;';
                             const lengthInches = Math.round(parseFloat(order.reqLength) * 12);
                             
-                            // 🚀 NEW: AUTO-CALCULATE WHICH PIECE THE GODOWN SHOULD USE
-                            let expectedSource = "✨ New 12ft Sheet";
+                            // 🚀 NEW: AUTO-CALCULATE AND BUILD THE DROPDOWN
                             let validOffcuts = offcuts.filter(o => {
                                 let offcutInches = Math.round(parseFloat(o.length) * 12);
                                 return parseFloat(o.width) === parseFloat(order.reqWidth) && offcutInches >= lengthInches;
                             });
 
-                            if (validOffcuts.length > 0) {
-                                // Find the closest fitting scrap piece
-                                validOffcuts.sort((a, b) => parseFloat(a.length) - parseFloat(b.length));
-                                let pieceInches = Math.round(parseFloat(validOffcuts[0].length) * 12);
-                                expectedSource = `♻️ Scrap ${validOffcuts[0].id} (${pieceInches}in)`;
-                            } else if (fullStock[order.reqWidth] <= 0) {
-                                expectedSource = "⚠️ OUT OF STOCK";
-                            }
+                            let sourceOptionsHTML = `<option value="auto">✨ Auto-Select Best Material</option>`;
+                            sourceOptionsHTML += `<option value="new">📦 Force New 12ft Sheet</option>`;
+                            
+                            validOffcuts.forEach(scrap => {
+                                let scrapInches = Math.round(parseFloat(scrap.length) * 12);
+                                sourceOptionsHTML += `<option value="${scrap.id}">♻️ Scrap ${scrap.id} (${scrapInches}in)</option>`;
+                            });
                             // END AUTO-CALCULATE
 
                             cardHTML += `
@@ -951,10 +961,12 @@ let saveTimeout = null;
                                             <span style="color: #ef4444; font-size: 22px;">${lengthInches}</span> <span style="font-size: 14px; color: #94a3b8; font-weight: 500;">inches</span>
                                         </div>
                                         
-                                        <!-- NEW: TARGET MATERIAL INSTRUCTION BOX -->
-                                        <div style="background: #f1f5f9; padding: 8px 12px; border-radius: 6px; margin-top: 8px; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between;">
-                                            <span style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Pick Material:</span>
-                                            <span style="font-size: 14px; font-weight: 800; color: ${expectedSource.includes('Scrap') ? '#d97706' : 'var(--navy)'};">${expectedSource}</span>
+                                        <!-- NEW: MATERIAL OVERRIDE DROPDOWN -->
+                                        <div style="background: #f1f5f9; padding: 10px; border-radius: 6px; margin-top: 8px; border: 1px solid #e2e8f0;">
+                                            <label style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase;">Material Used:</label>
+                                            <select id="godownSource_${order.id}" style="width: 100%; margin-top: 5px; padding: 8px; border-radius: 4px; border: 1px solid #cbd5e1; font-weight: bold; color: var(--navy); background: white;">
+                                                ${sourceOptionsHTML}
+                                            </select>
                                         </div>
                                         
                                     </div>
@@ -986,8 +998,8 @@ let saveTimeout = null;
                         queueContainer.innerHTML += cardHTML;
                     }
                 }
-            }
-
+            } // End of Godown Queue
+            
             // 2. Draw Full Stock
             const stockBody = document.getElementById('fullStockTable');
             if(stockBody) {
@@ -1356,7 +1368,7 @@ let saveTimeout = null;
             showNotification(`Added Scrap ${newId} (${width}ft × ${lengthInches}in) to inventory!`, false);
         };
 
-// --- GODOWN LOGIC ---
+// --- GODOWN LOGIC (WITH OVERRIDE CONTROL & AUTO-DELETE) ---
         window.processGodownCut = async function(orderId) {
             const index = activeQueue.findIndex(o => o.id === orderId);
             if (index === -1) return;
@@ -1365,6 +1377,7 @@ let saveTimeout = null;
             const actualWidth = document.getElementById(`godownWidth_${orderId}`).value;
             const actualLengthInches = parseFloat(document.getElementById(`godownLengthInches_${orderId}`).value);
             const actualLengthFeet = parseFloat((actualLengthInches / 12).toFixed(2));
+            const sourceChoice = document.getElementById(`godownSource_${orderId}`).value; // Read the dropdown
 
             if (isNaN(actualLengthFeet) || actualLengthFeet <= 0 || actualLengthFeet > 12) {
                 showNotification("<strong>Error:</strong> Godown entered an invalid cut length.", true);
@@ -1380,48 +1393,72 @@ let saveTimeout = null;
                 leftover: ""
             };
 
-            // THE FIX: Force both the offcut width and the dropdown width to be Numbers (parseFloat) 
-            // so they always match, whether they came from Google Sheets or the screen!
-            let validOffcuts = offcuts.filter(o => {
-                let offcutInches = Math.round(parseFloat(o.length) * 12);
-                return parseFloat(o.width) === parseFloat(actualWidth) && offcutInches >= actualLengthInches;
-            });
-            
-            if (validOffcuts.length > 0) {
-                validOffcuts.sort((a, b) => parseFloat(a.length) - parseFloat(b.length));
-                let bestPiece = validOffcuts[0];
-                let originalInches = Math.round(parseFloat(bestPiece.length) * 12);
-                let leftoverInches = originalInches - actualLengthInches;
-                bestPiece.length = parseFloat((leftoverInches / 12).toFixed(2));
-                
-                logEntry.source = `Offcut ${bestPiece.id}`;
-                logEntry.leftover = `${bestPiece.length} ft (${leftoverInches} in)`;
-            } 
-            else if (fullStock[actualWidth] > 0) {
-                fullStock[actualWidth] -= 1;
-                let remainderInches = 144 - actualLengthInches;
-                let remainderFeet = parseFloat((remainderInches / 12).toFixed(2));
-                
-                if (remainderInches > 0) {
-                    let newId = generateId();
-                    offcuts.push({ id: newId, width: actualWidth, length: remainderFeet });
-                    logEntry.source = `New 12ft Piece`;
-                    logEntry.leftover = `Saved ${remainderFeet}ft (${remainderInches} in) as ${newId}`;
-                } else {
-                    logEntry.source = `New 12ft Piece`;
-                    logEntry.leftover = `None`;
-                }
+            let selectedScrap = null;
+            let forceNewSheet = false;
+
+            // 1. Determine what the employee actually held in their hands
+            if (sourceChoice === 'new') {
+                forceNewSheet = true;
+            } else if (sourceChoice !== 'auto') {
+                selectedScrap = offcuts.find(o => o.id === sourceChoice);
             } else {
-                showNotification(`<strong>Out of Stock!</strong> Cannot cut ${actualWidth}ft. Need a new 12ft sheet.`, true);
-                return;
+                // Auto Mode: Find best fit if they didn't override
+                let validOffcuts = offcuts.filter(o => {
+                    let offcutInches = Math.round(parseFloat(o.length) * 12);
+                    return parseFloat(o.width) === parseFloat(actualWidth) && offcutInches >= actualLengthInches;
+                });
+                if (validOffcuts.length > 0) {
+                    validOffcuts.sort((a, b) => parseFloat(a.length) - parseFloat(b.length));
+                    selectedScrap = validOffcuts[0];
+                } else {
+                    forceNewSheet = true;
+                }
             }
 
+            // 2. Process the cut based on the decision
+            if (selectedScrap) {
+                let originalInches = Math.round(parseFloat(selectedScrap.length) * 12);
+                let leftoverInches = originalInches - actualLengthInches;
+                
+                logEntry.source = `♻️ Offcut ${selectedScrap.id}`;
+                
+                // If there is 1 inch or less remaining, throw it in the trash
+                if (leftoverInches <= 1) {
+                    logEntry.leftover = `None (Piece Fully Used)`;
+                    offcuts = offcuts.filter(o => o.id !== selectedScrap.id); // Permanently deletes it
+                } else {
+                    // Otherwise, just reduce the size of the existing piece
+                    selectedScrap.length = parseFloat((leftoverInches / 12).toFixed(2));
+                    logEntry.leftover = `${selectedScrap.length} ft (${leftoverInches} in)`;
+                }
+                
+            } else if (forceNewSheet || fullStock[actualWidth] > 0) {
+                if (fullStock[actualWidth] <= 0) {
+                    showNotification(`<strong>Out of Stock!</strong> Cannot cut new ${actualWidth}ft sheet.`, true);
+                    return;
+                }
+                
+                fullStock[actualWidth] -= 1;
+                let remainderInches = 144 - actualLengthInches;
+                logEntry.source = `📦 New 12ft Sheet`;
+                
+                if (remainderInches > 1) {
+                    let remainderFeet = parseFloat((remainderInches / 12).toFixed(2));
+                    let newId = typeof generateId === 'function' ? generateId() : 'J-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+                    offcuts.push({ id: newId, width: actualWidth, length: remainderFeet });
+                    logEntry.leftover = `Saved ${remainderFeet}ft (${remainderInches} in) as ${newId}`;
+                } else {
+                    logEntry.leftover = `None`;
+                }
+            }
+
+            // 3. Save and finalize
             cutLogs.push(logEntry);
             activeQueue.splice(index, 1);
             
             await saveToServer();
             renderUI();
-            showNotification("Cut processed and inventory updated!", false);
+            showNotification("Cut processed and inventory perfectly updated!", false);
         };
 
         let godownOrderToDelete = null; 
