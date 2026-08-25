@@ -734,17 +734,10 @@
         // ==========================================
         
         const GOOGLE_APP_URL = "https://script.google.com/macros/s/AKfycby3Mq3QKfFo5ekPZlmAm-P-lbdE5i8xCTsuTFo_12-4kBGbyMukKDhPAd3v9WBSXepmvA/exec";
+let saveTimeout = null; 
 
-        let saveTimeout = null; // Memory for the Debouncer
-
-        // 1. SAVE TO CLOUD & LOCAL CACHE
+        // 1. SAVE TO CLOUD (NOW INCLUDES QUEUE AND LOGS)
         window.saveToServer = async function() {
-            // Save temporary queues locally so they instantly survive a page refresh
-            localStorage.setItem('activeQueue', JSON.stringify(activeQueue));
-            localStorage.setItem('cutLogs', JSON.stringify(cutLogs));
-            localStorage.setItem('currentCustomerCart', JSON.stringify(currentCustomerCart));
-
-            // 🛑 DEBOUNCER: Wait for rapid clicking to stop before sending to Google
             if (saveTimeout) clearTimeout(saveTimeout);
             
             saveTimeout = setTimeout(async () => {
@@ -752,71 +745,60 @@
                     const payload = {
                         fullStock: fullStock,
                         offcuts: offcuts,
-                        dealerDeliveries: dealerDeliveries
+                        dealerDeliveries: dealerDeliveries,
+                        activeQueue: activeQueue, // Sent to cloud for Godown Phone!
+                        cutLogs: cutLogs          // Sent to cloud for permanent record!
                     };
                     
                     await fetch(GOOGLE_APP_URL, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'text/plain;charset=utf-8',
-                        },
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                         body: JSON.stringify(payload),
                         redirect: 'follow'
                     });
                     console.log("Cloud Save Successful");
                 } catch (error) {
-                    console.error("Failed to save to Google Sheets:", error);
-                    showNotification("Warning: Cloud Sync Failed!", true);
+                    console.error("Cloud Sync Failed:", error);
                 }
-            }, 800); // Waits 0.8 seconds after your last click before hitting Google
+            }, 800); 
         };
 
-        // 2. LOAD FROM CLOUD ON STARTUP
-        window.loadFromServer = async function() {
+        // 2. LOAD FROM CLOUD (WITH SILENT REFRESH)
+        window.loadFromServer = async function(isSilent = false) {
             try {
-                showNotification("Syncing with Cloud Database...", false);
+                if (!isSilent) showNotification("Syncing with Cloud Database...", false);
 
-                // Restore temporary queues from local memory
-                const savedQueue = localStorage.getItem('activeQueue');
-                if (savedQueue) activeQueue = JSON.parse(savedQueue);
-                
-                const savedLogs = localStorage.getItem('cutLogs');
-                if (savedLogs) cutLogs = JSON.parse(savedLogs);
-                
-                const savedCart = localStorage.getItem('currentCustomerCart');
-                if (savedCart) currentCustomerCart = JSON.parse(savedCart);
-                
-                // Fetch core inventory from Google Sheets
                 const response = await fetch(GOOGLE_APP_URL, { redirect: 'follow' });
                 const data = await response.json();
 
-                // Inject the live data from Google Sheets into the app
-                if (data.fullStock && Object.keys(data.fullStock).length > 0) fullStock = data.fullStock;
+                if (data.fullStock) fullStock = data.fullStock;
                 if (data.offcuts) offcuts = data.offcuts;
                 if (data.dealerDeliveries) dealerDeliveries = data.dealerDeliveries;
+                if (data.activeQueue) activeQueue = data.activeQueue; // Pull Godown orders!
+                if (data.cutLogs) cutLogs = data.cutLogs;             // Pull daily logs!
 
-                // THE FIX: Draw the screen using your actual master function!
                 renderUI();
                 if(typeof window.renderCart === 'function') window.renderCart();
                 if(typeof window.renderDeliveryLog === 'function') window.renderDeliveryLog();
                 
-                showNotification("Cloud Sync Complete!", false);
+                if (!isSilent) showNotification("Cloud Sync Complete!", false);
             } catch (error) {
-                console.error("Failed to load from Google Sheets:", error);
-                showNotification("Offline Mode: Using local data.", true);
-                
-                // Even if offline, draw the screen with whatever we have
-                renderUI();
-                if(typeof window.renderCart === 'function') window.renderCart();
-                if(typeof window.renderDeliveryLog === 'function') window.renderDeliveryLog();
+                console.error("Load Failed:", error);
+                if (!isSilent) showNotification("Offline Mode: Using local data.", true);
             }
         };
 
         // 3. TRIGGER LOAD WHEN APP OPENS
         window.onload = function() {
-            window.loadFromServer();
+            window.loadFromServer(false);
+            
+            // 🚀 NEW: THE AUTO-SCANNER
+            // Checks Google Sheets silently in the background every 15 seconds
+            // so the Godown employee's phone automatically updates without them touching it.
+            setInterval(() => {
+                window.loadFromServer(true);
+            }, 15000); 
         };
-
 
        // --- SMART CALCULATOR (SINGLE BOX) ---
         const inputValue = document.getElementById('reqLengthValue');
