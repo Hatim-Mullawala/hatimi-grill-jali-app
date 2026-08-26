@@ -591,7 +591,28 @@
                     <!-- JS will draw grouped grids here -->
                 </div>
             </div>
-            
+            <!-- ========================================== -->
+            <!-- 🛟 EMERGENCY BACKUP TOOL                     -->
+            <!-- ========================================== -->
+            <div class="panel" style="margin-top: 20px; border-top: 4px solid #10b981;">
+                <h3 style="color: #10b981;">🛟 Data Backup & Recovery</h3>
+                <p style="font-size: 13px; color: #64748b; margin-bottom: 15px; font-weight: 500;">
+                    Download a secure hard-copy of your entire inventory, or restore your database from a previous backup file.
+                </p>
+                
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <!-- DOWNLOAD BUTTON -->
+                    <button onclick="window.downloadBackup()" style="flex: 1; min-width: 140px; background: #10b981; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: 800; font-size: 14px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);">
+                        📥 Download
+                    </button>
+                    
+                    <!-- RESTORE BUTTON (HIDDEN INPUT + TRIGGER) -->
+                    <input type="file" id="backupFileInput" accept=".json" style="display: none;" onchange="window.restoreBackup(event)">
+                    <button onclick="document.getElementById('backupFileInput').click()" style="flex: 1; min-width: 140px; background: white; color: #ef4444; border: 2px solid #ef4444; padding: 12px; border-radius: 6px; font-weight: 800; font-size: 14px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;">
+                        ⬆️ Restore File
+                    </button>
+                </div>
+            </div>
         </div> <!-- PERFECTLY CLOSED grid-layout -->
     </div> <!-- PERFECTLY CLOSED page-inventory -->
  <!-- ========================================== -->
@@ -729,20 +750,25 @@
         let currentCustomerCart = []; 
         let dealerDeliveries = [];
 
-       // ==========================================
-        // ☁️ LIVE GOOGLE SHEETS CLOUD SYNC
+// ==========================================
+        // ☁️ LIVE GOOGLE SHEETS CLOUD SYNC 
         // ==========================================
-        
         const GOOGLE_APP_URL = "https://script.google.com/macros/s/AKfycby3Mq3QKfFo5ekPZlmAm-P-lbdE5i8xCTsuTFo_12-4kBGbyMukKDhPAd3v9WBSXepmvA/exec";
         
         let saveTimeout = null; 
-        let isSyncing = false; // 🚀 NEW: The Sync Lock
+        let isSyncing = false; 
+        let hasLoadedData = false; // 🛡️ NEW: THE DATA GUARD FLAG
 
         // 1. SAVE TO CLOUD
         window.saveToServer = async function() {
+            // 🛡️ DATA GUARD: Refuse to save if we haven't successfully loaded the data first!
+            if (!hasLoadedData) {
+                console.warn("🛡️ Safety Lock: Refusing to save to prevent wiping the database.");
+                return;
+            }
+
             if (saveTimeout) clearTimeout(saveTimeout);
-            
-            isSyncing = true; // Lock the auto-scanner from running
+            isSyncing = true; 
             
             saveTimeout = setTimeout(async () => {
                 try {
@@ -764,18 +790,14 @@
                 } catch (error) {
                     console.error("Cloud Sync Failed:", error);
                 } finally {
-                    isSyncing = false; // Unlock the scanner after saving is completely finished
+                    isSyncing = false; 
                 }
             }, 800); 
         };
 
         // 2. LOAD FROM CLOUD 
         window.loadFromServer = async function(isSilent = false) {
-            // 🚀 NEW: If the scanner tries to run while a save is happening, ignore it!
-            if (isSilent && isSyncing) {
-                console.log("Auto-Scanner Paused: Waiting for save to finish...");
-                return; 
-            }
+            if (isSilent && isSyncing) return; 
 
             try {
                 if (!isSilent) showNotification("Syncing with Cloud Database...", false);
@@ -783,7 +805,6 @@
                 const response = await fetch(GOOGLE_APP_URL, { redirect: 'follow' });
                 const data = await response.json();
 
-                // 🚀 NEW: Double-check that a user didn't click save WHILE we were downloading
                 if (isSilent && isSyncing) return; 
 
                 if (data.fullStock) fullStock = data.fullStock;
@@ -791,6 +812,8 @@
                 if (data.dealerDeliveries) dealerDeliveries = data.dealerDeliveries;
                 if (data.activeQueue) activeQueue = data.activeQueue; 
                 if (data.cutLogs) cutLogs = data.cutLogs;             
+
+                hasLoadedData = true; // 🛡️ DATA GUARD UNLOCKED: We successfully got the data!
 
                 renderUI();
                 if(typeof window.renderCart === 'function') window.renderCart();
@@ -806,11 +829,138 @@
         // 3. TRIGGER LOAD WHEN APP OPENS
         window.onload = function() {
             window.loadFromServer(false);
-            
-            // THE AUTO-SCANNER
             setInterval(() => {
                 window.loadFromServer(true);
             }, 15000); 
+        };
+        
+        // ==========================================
+        // 🛟 EMERGENCY MANUAL BACKUP
+        // ==========================================
+        window.downloadBackup = function() {
+            // Package all current data
+            const backupData = {
+                timestamp: new Date().toLocaleString(),
+                fullStock: fullStock,
+                offcuts: offcuts,
+                dealerDeliveries: dealerDeliveries,
+                activeQueue: activeQueue,
+                cutLogs: cutLogs
+            };
+            
+            // Convert to a file format
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+            const downloadNode = document.createElement('a');
+            
+            // Name the file with today's date
+            const dateText = new Date().toISOString().split('T')[0];
+            downloadNode.setAttribute("href", dataStr);
+            downloadNode.setAttribute("download", `Hatimi_Inventory_Backup_${dateText}.json`);
+            
+            // Trigger the download on the phone
+            document.body.appendChild(downloadNode);
+            downloadNode.click();
+            downloadNode.remove();
+            
+            showNotification("Backup saved to your phone's Downloads folder!", false);
+        };
+        // ==========================================
+        // 🛟 EMERGENCY MANUAL RESTORE
+        // ==========================================
+        window.restoreBackup = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            
+            // This runs as soon as the file finishes loading into the app
+            reader.onload = async function(e) {
+                try {
+                    const backupData = JSON.parse(e.target.result);
+                    
+                    // Safety check: Does this file actually look like a Hatimi Backup?
+                    if (backupData.fullStock && backupData.offcuts) {
+                        
+                        // 1. Overwrite the app's broken memory with the healthy backup memory
+                        fullStock = backupData.fullStock;
+                        offcuts = backupData.offcuts;
+                        if (backupData.dealerDeliveries) dealerDeliveries = backupData.dealerDeliveries;
+                        if (backupData.activeQueue) activeQueue = backupData.activeQueue;
+                        if (backupData.cutLogs) cutLogs = backupData.cutLogs;
+
+                        // 2. Unlock the Data Guard (because we know this data is safe to save)
+                        hasLoadedData = true;
+
+                        // 3. Immediately redraw the screen so you can see the fixed data
+                        renderUI();
+                        if(typeof window.renderCart === 'function') window.renderCart();
+                        if(typeof window.renderDeliveryLog === 'function') window.renderDeliveryLog();
+
+                        // 4. Force a Cloud Sync so Google Sheets is instantly fixed too!
+                        window.saveToServer();
+                        
+                        showNotification("✅ Backup successfully restored and synced to cloud!", false);
+                    } else {
+                        showNotification("❌ Invalid file. This is not a Hatimi backup.", true);
+                    }
+                } catch (err) {
+                    console.error("Restore failed:", err);
+                    showNotification("❌ Failed to read the backup file.", true);
+                }
+                
+                // Clear the input so you can select the exact same file again later if needed
+                event.target.value = ''; 
+            };
+            
+            // Start reading the file as text
+            reader.readAsText(file);
+        };
+// ==========================================
+        // ✏️ GODOWN: INLINE EDIT CUSTOMER NAME
+        // ==========================================
+        let editingGodownCustomer = null; // Remembers who we are editing
+
+        window.startEditingGodownName = function(oldName) {
+            editingGodownCustomer = oldName;
+            window.renderUI(); // Redraw screen to show the input box
+        };
+
+        window.cancelEditingGodownName = function() {
+            editingGodownCustomer = null;
+            window.renderUI(); // Cancel and hide the input box
+        };
+
+        window.saveGodownName = function() {
+            const inputEl = document.getElementById('editGodownNameInput');
+            if (!inputEl || !editingGodownCustomer) return;
+
+            const newName = inputEl.value.trim();
+            const oldName = editingGodownCustomer;
+
+            // If they typed something new, update the database
+            if (newName && newName !== "" && newName !== oldName) {
+                let wasUpdated = false;
+                
+                activeQueue.forEach(order => {
+                    const currentName = order.customer || 'Walk-in';
+                    if (currentName === oldName) {
+                        order.customer = newName;
+                        wasUpdated = true;
+                    }
+                });
+                
+                if (wasUpdated) {
+                    editingGodownCustomer = null;
+                    window.renderUI();
+                    window.saveToServer(); 
+                    showNotification("✅ Customer name updated!", false);
+                    return;
+                }
+            }
+            
+            // If they left it blank or didn't change anything, just cancel
+            editingGodownCustomer = null;
+            window.renderUI();
         };
        // --- SMART CALCULATOR (SINGLE BOX) ---
         const inputValue = document.getElementById('reqLengthValue');
@@ -912,7 +1062,7 @@
             if(queueContainer) {
                 queueContainer.innerHTML = '';
                 if (activeQueue.length === 0) {
-                    queueContainer.innerHTML = '<p style="text-align:center; color:#888; font-weight:bold;">No pending orders for godown.</p>';
+                    queueContainer.innerHTML = '<p style="text-align:center; color:#94a3b8; font-weight:600; padding: 20px;">No pending orders for godown.</p>';
                 } else {
                     const groupedOrders = {};
                     activeQueue.forEach(order => {
@@ -923,72 +1073,135 @@
 
                     for (const [customerName, items] of Object.entries(groupedOrders)) {
                         let cardHTML = `
-                            <div class="queue-card" style="margin-bottom: 15px; background: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow: hidden; border: 1px solid #e2e8f0;">
-                                <div style="background-color: #f8fafc; padding: 12px 15px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between;">
-                                    <h4 style="margin: 0; font-size: 15px; font-weight: 700; color: var(--navy, #0f172a); text-transform: uppercase; letter-spacing: 0.5px;">🛒 ${customerName}</h4>
-                                    <span style="background: #e2e8f0; color: #475569; font-size: 11px; padding: 4px 8px; border-radius: 4px; font-weight: 700;">${items.length} ITEM(S)</span>
+                            <div class="queue-card" style="margin-bottom: 20px; background: #ffffff; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #e2e8f0;">
+                                <div style="background-color: #ffffff; padding: 14px 16px; border-bottom: 2px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between;">
+                        `;
+
+                        if (editingGodownCustomer === customerName) {
+                            cardHTML += `
+                                    <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
+                                        <input type="text" id="editGodownNameInput" value="${customerName}" style="flex: 1; padding: 8px 12px; border: 2px solid var(--navy, #0f172a); border-radius: 6px; font-size: 14px; font-weight: 800; color: var(--navy); outline: none;">
+                                        <button onclick="window.saveGodownName()" style="background: var(--navy, #0f172a); color: white; border: none; padding: 8px 14px; border-radius: 6px; font-weight: bold; cursor: pointer;">Save</button>
+                                        <button onclick="window.cancelEditingGodownName()" style="background: white; color: #64748b; border: 1px solid #cbd5e1; padding: 8px 14px; border-radius: 6px; font-weight: bold; cursor: pointer;">Cancel</button>
+                                    </div>
+                            `;
+                        } else {
+                            cardHTML += `
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <h4 style="margin: 0; font-size: 16px; font-weight: 800; color: var(--navy, #0f172a); text-transform: uppercase; letter-spacing: 0.5px;">
+                                            <span style="color: #94a3b8; font-size: 14px; margin-right: 4px;">👤</span> ${customerName}
+                                        </h4>
+                                        <button data-name="${customerName}" onclick="window.startEditingGodownName(this.getAttribute('data-name'))" style="background: white; border: 1px solid #cbd5e1; font-size: 11px; cursor: pointer; padding: 4px 12px; color: #64748b; border-radius: 20px; font-weight: 700; transition: background 0.2s; text-transform: uppercase;">Edit ✏️</button>
+                                    </div>
+                                    <span style="background: var(--navy, #0f172a); color: white; font-size: 11px; padding: 4px 10px; border-radius: 12px; font-weight: 800; letter-spacing: 0.5px; box-shadow: 0 2px 4px rgba(15, 23, 42, 0.2);">${items.length} ITEM(S)</span>
+                            `;
+                        }
+
+                        cardHTML += `
                                 </div>
-                                <div style="padding: 15px; display: flex; flex-direction: column; gap: 15px;">
+                                <div style="padding: 16px; display: flex; flex-direction: column; gap: 16px; background: #f8fafc;">
                         `;
 
                         items.forEach((order, index) => {
                             const isLast = index === items.length - 1;
-                            const borderStyle = isLast ? '' : 'border-bottom: 1px dashed #cbd5e1; padding-bottom: 15px;';
+                            const borderStyle = isLast ? '' : 'border-bottom: 2px dashed #e2e8f0; padding-bottom: 20px; margin-bottom: 4px;';
                             const lengthInches = Math.round(parseFloat(order.reqLength) * 12);
                             
-                            // 🚀 NEW: AUTO-CALCULATE AND BUILD THE DROPDOWN
                             let validOffcuts = offcuts.filter(o => {
                                 let offcutInches = Math.round(parseFloat(o.length) * 12);
                                 return parseFloat(o.width) === parseFloat(order.reqWidth) && offcutInches >= lengthInches;
                             });
 
-                            let sourceOptionsHTML = `<option value="auto">✨ Auto-Select Best Material</option>`;
-                            sourceOptionsHTML += `<option value="new">📦 Force New 12ft Sheet</option>`;
+                            let bestScrap = null;
+                            let minWaste = Infinity;
+
+                            validOffcuts.forEach(scrap => {
+                                let scrapInches = Math.round(parseFloat(scrap.length) * 12);
+                                let waste = scrapInches - lengthInches;
+                                if (waste >= 0 && waste < minWaste) {
+                                    minWaste = waste;
+                                    bestScrap = scrap;
+                                }
+                            });
+
+                            let suggestionHTML = '';
+                            let sourceOptionsHTML = '';
+
+                            if (bestScrap) {
+                                let bestScrapInches = Math.round(parseFloat(bestScrap.length) * 12);
+                                // 🚀 MOBILE-OPTIMIZED GREEN SCRAP BADGE
+                                suggestionHTML = `
+                                    <div style="background: #ecfdf5; border: 1px solid #10b981; border-radius: 6px; padding: 10px 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <span style="font-size: 18px;">♻️</span>
+                                            <span style="font-size: 14px; color: #064e3b; font-weight: 800; text-transform: uppercase;">Scrap #${bestScrap.id} <span style="color:#10b981; font-weight: 700;">(${bestScrapInches}")</span></span>
+                                        </div>
+                                        <span style="background: #d1fae5; color: #047857; font-size: 11px; padding: 3px 6px; border-radius: 4px; font-weight: 800; letter-spacing: 0.5px;">${minWaste}" WASTE</span>
+                                    </div>
+                                `;
+                                sourceOptionsHTML += `<option value="new">📦 Force New 12ft Sheet</option>`;
+                            } else {
+                                // 🚀 MOBILE-OPTIMIZED BLUE NEW SHEET BADGE
+                                suggestionHTML = `
+                                    <div style="background: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 6px; padding: 10px 12px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                                        <span style="font-size: 18px;">📦</span>
+                                        <span style="font-size: 14px; color: #075985; font-weight: 800; text-transform: uppercase;">New 12ft Sheet</span>
+                                    </div>
+                                `;
+                                sourceOptionsHTML += `<option value="new" selected>📦 Use New 12ft Sheet</option>`;
+                            }
                             
                             validOffcuts.forEach(scrap => {
                                 let scrapInches = Math.round(parseFloat(scrap.length) * 12);
-                                sourceOptionsHTML += `<option value="${scrap.id}">♻️ Scrap ${scrap.id} (${scrapInches}in)</option>`;
+                                let isSelected = (bestScrap && bestScrap.id === scrap.id) ? 'selected' : '';
+                                sourceOptionsHTML += `<option value="${scrap.id}" ${isSelected}>♻️ Scrap ${scrap.id} (${scrapInches}in)</option>`;
                             });
-                            // END AUTO-CALCULATE
 
                             cardHTML += `
                                 <div style="display: flex; flex-direction: column; gap: 12px; width: 100%; ${borderStyle}">
-                                    <div style="display: flex; flex-direction: column; gap: 2px;">
-                                        <span style="color:#64748b; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Requested Size</span>
-                                        <div style="font-size: 18px; color: var(--navy, #0f172a); font-weight: 700;">
-                                            ${order.reqWidth} <span style="font-size: 14px; color: #94a3b8; font-weight: 500;">ft</span> 
-                                            <span style="color: #cbd5e1; margin: 0 4px; font-weight: normal;">×</span> 
-                                            <span style="color: #ef4444; font-size: 22px;">${lengthInches}</span> <span style="font-size: 14px; color: #94a3b8; font-weight: 500;">inches</span>
+                                    
+                                    <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                                        <div style="display: flex; flex-direction: column; gap: 2px;">
+                                            <span style="color:#64748b; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Requested Size</span>
+                                            <div style="font-size: 20px; color: var(--navy, #0f172a); font-weight: 800;">
+                                                ${order.reqWidth} <span style="font-size: 14px; color: #94a3b8; font-weight: 600;">ft</span> 
+                                                <span style="color: #cbd5e1; margin: 0 6px; font-weight: normal;">×</span> 
+                                                <span style="color: #ef4444; font-size: 24px;">${lengthInches}</span> <span style="font-size: 14px; color: #94a3b8; font-weight: 600;">inches</span>
+                                            </div>
                                         </div>
-                                        
-                                        <!-- NEW: MATERIAL OVERRIDE DROPDOWN -->
-                                        <div style="background: #f1f5f9; padding: 10px; border-radius: 6px; margin-top: 8px; border: 1px solid #e2e8f0;">
-                                            <label style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase;">Material Used:</label>
-                                            <select id="godownSource_${order.id}" style="width: 100%; margin-top: 5px; padding: 8px; border-radius: 4px; border: 1px solid #cbd5e1; font-weight: bold; color: var(--navy); background: white;">
-                                                ${sourceOptionsHTML}
-                                            </select>
-                                        </div>
-                                        
                                     </div>
-                                    <div style="background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 10px;">
-                                        <div style="font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px;">CONFIRM ACTUAL CUT:</div>
-                                        <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
-                                            <select id="godownWidth_${order.id}" class="modern-select" style="flex: 1; min-width: 0;">
+                                    
+                                    <!-- THE SLEEK VISUAL SUGGESTION BADGE -->
+                                    ${suggestionHTML}
+                                    
+                                    <!-- THE DROPDOWN -->
+                                    <div style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 10px;">
+                                        <label style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase;">Confirm Source Material:</label>
+                                        <select id="godownSource_${order.id}" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 14px; font-weight: bold; color: var(--navy); background: #f8fafc; outline: none;">
+                                            ${sourceOptionsHTML}
+                                        </select>
+                                    </div>
+
+                                    <!-- PROCESS CUT CONTROLS -->
+                                    <div style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 12px;">
+                                        <div style="font-size: 11px; font-weight: 800; color: #64748b; letter-spacing: 0.5px; text-transform: uppercase;">Confirm Actual Cut Size:</div>
+                                        <div style="display: flex; align-items: center; gap: 10px; width: 100%;">
+                                            <select id="godownWidth_${order.id}" style="flex: 1; padding: 12px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 15px; font-weight: bold; color: var(--navy); background: #f8fafc; outline: none;">
                                                 <option value="2" ${order.reqWidth === '2' ? 'selected' : ''}>2 ft</option>
                                                 <option value="2.5" ${order.reqWidth === '2.5' ? 'selected' : ''}>2.5 ft</option>
                                                 <option value="3" ${order.reqWidth === '3' ? 'selected' : ''}>3 ft</option>
                                                 <option value="3.5" ${order.reqWidth === '3.5' ? 'selected' : ''}>3.5 ft</option>
                                                 <option value="4" ${order.reqWidth === '4' ? 'selected' : ''}>4 ft</option>
                                             </select>
-                                            <span style="color: #94a3b8; font-weight: bold; font-size: 14px;">✕</span>
-                                            <div style="flex: 1; min-width: 0; position: relative; display: flex; align-items: center;">
-                                                <input type="number" id="godownLengthInches_${order.id}" value="${lengthInches}" step="1" style="width: 100%; padding: 10px; padding-right: 32px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 16px; font-weight: bold; color: #ef4444; text-align: center; outline: none; box-sizing: border-box; background: white;">
-                                                <span style="position: absolute; right: 10px; color: #94a3b8; font-size: 13px; font-weight: 600;">in</span>
+                                            <span style="color: #94a3b8; font-weight: bold; font-size: 16px;">✕</span>
+                                            <div style="flex: 1; position: relative; display: flex; align-items: center;">
+                                                <input type="number" id="godownLengthInches_${order.id}" value="${lengthInches}" step="1" style="width: 100%; padding: 12px; padding-right: 32px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 18px; font-weight: 800; color: #ef4444; text-align: center; outline: none; box-sizing: border-box; background: #f8fafc;">
+                                                <span style="position: absolute; right: 12px; color: #94a3b8; font-size: 13px; font-weight: 700;">in</span>
                                             </div>
                                         </div>
-                                        <div style="display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 4px;">
-                                            <button style="background: #10b981; color: white; border: none; padding: 12px; border-radius: 4px; font-weight: 700; cursor: pointer; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);" onclick="window.processGodownCut('${order.id}')">✓ Process Cut</button>
-                                            <button style="background: white; color: #ef4444; border: 1px solid #fca5a5; padding: 0 16px; border-radius: 4px; cursor: pointer; font-size: 16px;" onclick="window.deleteGodownOrder('${order.id}')">🗑️</button>
+                                        <div style="display: grid; grid-template-columns: 1fr auto; gap: 10px; margin-top: 4px;">
+                                            <button style="background: #10b981; color: white; border: none; padding: 14px; border-radius: 6px; font-weight: 800; cursor: pointer; font-size: 15px; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2); transition: all 0.2s;" onclick="window.processGodownCut('${order.id}')">✓ Process Cut</button>
+                                            <button style="background: white; color: #ef4444; border: 2px solid #fee2e2; padding: 0 18px; border-radius: 6px; cursor: pointer; font-size: 18px; transition: all 0.2s;" onclick="window.deleteGodownOrder('${order.id}')">🗑️</button>
                                         </div>
                                     </div>
                                 </div>`;
@@ -998,7 +1211,7 @@
                         queueContainer.innerHTML += cardHTML;
                     }
                 }
-            } // End of Godown Queue
+            } 
             
             // 2. Draw Full Stock
             const stockBody = document.getElementById('fullStockTable');
@@ -1021,7 +1234,7 @@
                 });
             }
 
-           // 3. Draw Offcuts (GROUPED BY WIDTH - MODERN GRID)
+           // 3. Draw Offcuts 
             const offcutContainer = document.getElementById('offcutGridContainer');
 
             if(offcutContainer) {
@@ -1030,30 +1243,24 @@
                 if(offcuts.length === 0) {
                     offcutContainer.innerHTML = '<div style="text-align:center; color:#94a3b8; padding: 30px; font-weight: bold; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;">No offcuts in inventory.</div>';
                 } else {
-                    // 1. Group the offcuts by their Width
                     const groupedOffcuts = {};
                     offcuts.forEach(item => {
                         if (!groupedOffcuts[item.width]) groupedOffcuts[item.width] = [];
                         groupedOffcuts[item.width].push(item);
                     });
 
-                    // 2. Sort the groups from smallest width to largest
                     const sortedWidths = Object.keys(groupedOffcuts).sort((a, b) => parseFloat(a) - parseFloat(b));
 
                     sortedWidths.forEach(width => {
                         let widthGroupHTML = `
                         <div style="margin-bottom: 20px;">
-                            <!-- Header for this Width Group -->
                             <div style="background: var(--navy); color: white; padding: 8px 15px; border-radius: 8px 8px 0 0; font-size: 14px; font-weight: 800; display: flex; justify-content: space-between; align-items: center;">
                                 <span>📐 ${width} ft Width</span>
                                 <span style="background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 12px; font-size: 12px;">${groupedOffcuts[width].length} pieces</span>
                             </div>
-                            
-                            <!-- Smart CSS Grid for the Cards -->
                             <div style="border: 1px solid #cbd5e1; border-top: none; border-radius: 0 0 8px 8px; padding: 15px; background: white; display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px;">
                         `;
 
-                        // 3. Sort pieces from smallest to largest length
                         groupedOffcuts[width].sort((a, b) => parseFloat(a.length) - parseFloat(b.length));
 
                         groupedOffcuts[width].forEach(item => {
@@ -1073,7 +1280,6 @@
                                     <div style="color: #ef4444; font-size: 20px; font-weight: 800; margin-bottom: 2px;">${offcutInches}<span style="font-size: 13px; color: #94a3b8; font-weight: 600;"> in</span></div>
                                     <div style="color: #94a3b8; font-size: 11px; font-weight: 600;">(${item.length} ft)</div>
 
-                                    <!-- HIDDEN DELETE OVERLAY (Activates on Long Press) -->
                                     <div id="delete-overlay-${item.id}" style="display: none; position: absolute; top: 0; left: 0; height: 100%; width: 100%; background: rgba(254, 242, 242, 0.95); flex-direction: column; align-items: center; justify-content: center; gap: 8px; backdrop-filter: blur(1px);">
                                         <button onclick="window.deleteOffcut('${item.id}')" style="background: #ef4444; color: white; border: none; border-radius: 4px; padding: 6px 12px; font-weight: bold; font-size: 12px; cursor: pointer; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);">🗑️ Delete</button>
                                         <button onclick="window.hideDelete('${item.id}', event)" style="background: transparent; color: #64748b; border: none; font-size: 11px; cursor: pointer; font-weight: bold;">✖ Cancel</button>
@@ -1113,7 +1319,6 @@
                 }
             }
         }
-
         // --- HELPERS ---
         function generateId() {
             let maxId = 0;
@@ -1182,7 +1387,9 @@
                 saveToServer(); // Sends the batch to Google Sheets in the background
             }
         };
-        // --- CART SYSTEM ---
+      // --- CART SYSTEM ---
+        let editingCartIndex = -1; // 🚀 NEW: Tracks which row is currently being edited
+
         window.addSizeToCart = function() {
             const width = document.getElementById('reqWidth').value;
             const valInput = document.getElementById('reqLengthValue');
@@ -1201,11 +1408,57 @@
             document.getElementById('liveSqFt').innerText = '0.00';
             document.getElementById('scrapSuggestionBox').innerHTML = '';
             
+            editingCartIndex = -1; // Reset edit state if adding new
             window.renderCart();
-            saveToServer(); // Background save cache
+            saveToServer(); 
         };
 
-       window.renderCart = function() {
+        // 🚀 NEW: Inline Edit Functions
+        window.startEditingCartItem = function(index) {
+            editingCartIndex = index;
+            window.renderCart(); // Redraws cart with the input boxes on this specific row
+        };
+
+        window.cancelInlineEdit = function() {
+            editingCartIndex = -1;
+            window.renderCart(); // Cancels edit and redraws normally
+        };
+
+        window.saveInlineEdit = function(index) {
+            const newWidth = document.getElementById(`editCartWidth_${index}`).value;
+            const newInches = parseFloat(document.getElementById(`editCartInches_${index}`).value);
+            
+            if (isNaN(newInches) || newInches <= 0) {
+                alert("❌ Please enter a valid number for inches.");
+                return;
+            }
+
+            // Save the newly typed values
+            currentCustomerCart[index].width = newWidth;
+            currentCustomerCart[index].length = parseFloat((newInches / 12).toFixed(2));
+            
+            editingCartIndex = -1; // Close edit mode
+            window.renderCart();
+            saveToServer(); // Send update to Google Sheets
+        };
+
+        // 🗑️ Long Press Logic
+        var pressTimer;
+        window.startLongPress = function(index) {
+            // Disable long press if we are currently editing
+            if (editingCartIndex !== -1) return; 
+            
+            pressTimer = setTimeout(() => {
+                if (confirm("🗑️ Delete this size from your list?")) {
+                    window.removeCartItem(index);
+                }
+            }, 800); 
+        };
+        window.cancelLongPress = function() {
+            clearTimeout(pressTimer);
+        };
+
+        window.renderCart = function() {
             const cartDiv = document.getElementById('customerCart');
             if (!cartDiv) return;
 
@@ -1218,7 +1471,10 @@
             let grandTotalSqFt = 0; 
             let html = `
                 <div style="border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 12px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px;">
-                    <h4 style="margin: 0; color: var(--navy); white-space: nowrap; flex-shrink: 0;">🛒 Current List</h4>
+                    <div style="display: flex; flex-direction: column;">
+                        <h4 style="margin: 0; color: var(--navy); white-space: nowrap;">🛒 Current List</h4>
+                        <span style="font-size: 10px; color: #94a3b8; font-weight: bold; text-transform: uppercase;">Long press an item to delete</span>
+                    </div>
                     <strong style="color: #10b981; font-size: 15px; margin-left: auto; text-align: right; flex-shrink: 0;" id="cartGrandTotal">0.00 Sq Ft Total</strong>
                 </div>
                 <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px;">`;
@@ -1228,18 +1484,60 @@
                 grandTotalSqFt += itemSqFt; 
                 let displayInches = Math.round(item.length * 12);
                 
-                html += `
-                    <li style="padding-bottom: 10px; border-bottom: 1px dashed #e2e8f0; display: flex; justify-content: space-between; align-items: center; font-size: 15px;">
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <!-- THE NEW DELETE BUTTON -->
-                            <button onclick="window.removeCartItem(${index})" style="background: none; border: none; color: #ef4444; font-size: 16px; cursor: pointer; padding: 0 5px 0 0; margin-right: 5px; font-weight: bold;">✖</button>
-                            
+                // 🚀 CHECK: Are we editing THIS specific row?
+                if (editingCartIndex === index) {
+                    // YES -> Draw the inline input boxes
+                    html += `
+                    <li style="padding-bottom: 10px; border-bottom: 1px dashed #e2e8f0; display: flex; flex-direction: column; gap: 10px; background: #f8fafc; padding: 12px; border-radius: 6px; margin-bottom: 5px; border: 1px solid #cbd5e1;">
+                        <div style="font-size: 11px; font-weight: bold; color: #64748b; text-transform: uppercase;">Editing Size:</div>
+                        
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <select id="editCartWidth_${index}" style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; color: var(--navy); background: white; flex: 1;">
+                                <option value="2" ${item.width === '2' ? 'selected' : ''}>2 ft</option>
+                                <option value="2.5" ${item.width === '2.5' ? 'selected' : ''}>2.5 ft</option>
+                                <option value="3" ${item.width === '3' ? 'selected' : ''}>3 ft</option>
+                                <option value="3.5" ${item.width === '3.5' ? 'selected' : ''}>3.5 ft</option>
+                                <option value="4" ${item.width === '4' ? 'selected' : ''}>4 ft</option>
+                            </select>
+                            <span style="color: #94a3b8; font-size: 14px; font-weight: bold;">✕</span>
+                            <div style="position: relative; flex: 1;">
+                                <input type="number" id="editCartInches_${index}" value="${displayInches}" step="1" style="width: 100%; padding: 8px; padding-right: 25px; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; color: #ef4444; box-sizing: border-box; font-size: 16px; text-align: center;">
+                                <span style="position: absolute; right: 10px; top: 10px; color: #94a3b8; font-size: 12px; font-weight: bold;">in</span>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 8px; margin-top: 5px;">
+                            <button onclick="window.saveInlineEdit(${index})" style="flex: 1; background: #10b981; color: white; border: none; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 13px;">✅ Save</button>
+                            <button onclick="window.cancelInlineEdit()" style="flex: 1; background: white; color: #64748b; border: 1px solid #cbd5e1; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 13px;">❌ Cancel</button>
+                        </div>
+                    </li>`;
+                } else {
+                    // NO -> Draw the standard text row
+                    html += `
+                    <li 
+                        ontouchstart="window.startLongPress(${index})" 
+                        ontouchend="window.cancelLongPress()" 
+                        ontouchmove="window.cancelLongPress()"
+                        onmousedown="window.startLongPress(${index})" 
+                        onmouseup="window.cancelLongPress()" 
+                        onmouseleave="window.cancelLongPress()"
+                        style="padding-bottom: 10px; border-bottom: 1px dashed #e2e8f0; display: flex; justify-content: space-between; align-items: center; font-size: 15px; user-select: none; cursor: pointer;">
+                        
+                        <div style="display: flex; align-items: center; gap: 6px; pointer-events: none;">
                             <span style="font-weight: bold; color: var(--navy);">${item.width} ft</span>
                             <span style="color: #94a3b8; font-size: 13px;">✕</span>
                             <span style="font-weight: bold; color: #ef4444;">${displayInches} in</span>
                         </div>
-                        <strong style="color: #64748b;">${itemSqFt.toFixed(2)} Sq Ft</strong>
+                        
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <strong style="color: #64748b; font-size: 14px; pointer-events: none;">${itemSqFt.toFixed(2)} Sq Ft</strong>
+                            
+                            <button onclick="window.startEditingCartItem(${index}); event.stopPropagation();" style="background: white; border: 1px solid #cbd5e1; color: var(--navy); font-size: 12px; cursor: pointer; padding: 6px 14px; border-radius: 4px; font-weight: bold; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                                ✏️ Edit
+                            </button>
+                        </div>
                     </li>`;
+                }
             });
             
             html += `</ul>`;
@@ -1249,6 +1547,7 @@
 
         window.removeCartItem = function(index) {
             currentCustomerCart.splice(index, 1);
+            editingCartIndex = -1; // Reset if deleted
             window.renderCart();
             saveToServer();
         };
@@ -1506,7 +1805,7 @@
 
 
         // --- LONG PRESS GESTURES ---
-        let pressTimer;
+        var pressTimer;
         window.startLongPress = function(e, id) {
             pressTimer = setTimeout(() => {
                 if (navigator.vibrate) navigator.vibrate(50);
