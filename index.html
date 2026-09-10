@@ -1072,6 +1072,10 @@
                     });
 
                     for (const [customerName, items] of Object.entries(groupedOrders)) {
+                        
+                        // 🚀 GRAB THE TIME FROM THE ORDER
+                        const orderTime = items[0].time || 'Recent Order';
+
                         let cardHTML = `
                             <div class="queue-card" style="margin-bottom: 20px; background: #ffffff; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #e2e8f0;">
                                 <div style="background-color: #ffffff; padding: 14px 16px; border-bottom: 2px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between;">
@@ -1087,13 +1091,17 @@
                             `;
                         } else {
                             cardHTML += `
-                                    <div style="display: flex; align-items: center; gap: 12px;">
-                                        <h4 style="margin: 0; font-size: 16px; font-weight: 800; color: var(--navy, #0f172a); text-transform: uppercase; letter-spacing: 0.5px;">
-                                            <span style="color: #94a3b8; font-size: 14px; margin-right: 4px;">👤</span> ${customerName}
-                                        </h4>
-                                        <button data-name="${customerName}" onclick="window.startEditingGodownName(this.getAttribute('data-name'))" style="background: white; border: 1px solid #cbd5e1; font-size: 11px; cursor: pointer; padding: 4px 12px; color: #64748b; border-radius: 20px; font-weight: 700; transition: background 0.2s; text-transform: uppercase;">Edit ✏️</button>
+                                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                                        <div style="display: flex; align-items: center; gap: 12px;">
+                                            <h4 style="margin: 0; font-size: 16px; font-weight: 800; color: var(--navy, #0f172a); text-transform: uppercase; letter-spacing: 0.5px;">
+                                                <span style="color: #94a3b8; font-size: 14px; margin-right: 4px;">👤</span> ${customerName}
+                                            </h4>
+                                            <button data-name="${customerName}" onclick="window.startEditingGodownName(this.getAttribute('data-name'))" style="background: white; border: 1px solid #cbd5e1; font-size: 11px; cursor: pointer; padding: 4px 12px; color: #64748b; border-radius: 20px; font-weight: 700; transition: background 0.2s; text-transform: uppercase;">Edit ✏️</button>
+                                        </div>
+                                        <!-- 🚀 SHOW THE TIME RIGHT HERE -->
+                                        <div style="font-size: 11px; color: #94a3b8; font-weight: 700; letter-spacing: 0.5px;">🕒 ADDED: ${orderTime}</div>
                                     </div>
-                                    <span style="background: var(--navy, #0f172a); color: white; font-size: 11px; padding: 4px 10px; border-radius: 12px; font-weight: 800; letter-spacing: 0.5px; box-shadow: 0 2px 4px rgba(15, 23, 42, 0.2);">${items.length} ITEM(S)</span>
+                                    <span style="background: var(--navy, #0f172a); color: white; font-size: 11px; padding: 4px 10px; border-radius: 12px; font-weight: 800; letter-spacing: 0.5px; box-shadow: 0 2px 4px rgba(15, 23, 42, 0.2); height: fit-content;">${items.length} ITEM(S)</span>
                             `;
                         }
 
@@ -1129,7 +1137,6 @@
 
                             if (bestScrap) {
                                 let bestScrapInches = Math.round(parseFloat(bestScrap.length) * 12);
-                                // 🚀 MOBILE-OPTIMIZED GREEN SCRAP BADGE
                                 suggestionHTML = `
                                     <div style="background: #ecfdf5; border: 1px solid #10b981; border-radius: 6px; padding: 10px 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
                                         <div style="display: flex; align-items: center; gap: 8px;">
@@ -1141,7 +1148,6 @@
                                 `;
                                 sourceOptionsHTML += `<option value="new">📦 Force New 12ft Sheet</option>`;
                             } else {
-                                // 🚀 MOBILE-OPTIMIZED BLUE NEW SHEET BADGE
                                 suggestionHTML = `
                                     <div style="background: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 6px; padding: 10px 12px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
                                         <span style="font-size: 18px;">📦</span>
@@ -1171,10 +1177,8 @@
                                         </div>
                                     </div>
                                     
-                                    <!-- THE SLEEK VISUAL SUGGESTION BADGE -->
                                     ${suggestionHTML}
                                     
-                                    <!-- THE DROPDOWN -->
                                     <div style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 10px;">
                                         <label style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase;">Confirm Source Material:</label>
                                         <select id="godownSource_${order.id}" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 14px; font-weight: bold; color: var(--navy); background: #f8fafc; outline: none;">
@@ -1182,7 +1186,6 @@
                                         </select>
                                     </div>
 
-                                    <!-- PROCESS CUT CONTROLS -->
                                     <div style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 12px;">
                                         <div style="font-size: 11px; font-weight: 800; color: #64748b; letter-spacing: 0.5px; text-transform: uppercase;">Confirm Actual Cut Size:</div>
                                         <div style="display: flex; align-items: center; gap: 10px; width: 100%;">
@@ -1573,10 +1576,13 @@
             const customer = customerInput.value ? customerInput.value : "Walk-in Customer";
             let summaryText = "";
 
+            // 🚀 UPGRADED: Professional Time Format (e.g., "10 Sep, 10:45 PM")
+            const timeNow = new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true });
+
             currentCustomerCart.forEach((item, index) => {
                 let queueEntry = {
                     id: Date.now().toString() + "-" + index, 
-                    time: new Date().toLocaleString(),
+                    time: timeNow, // 🚀 Saved cleanly here!
                     customer: customer,
                     reqWidth: item.width,
                     reqLength: item.length 
@@ -1593,7 +1599,6 @@
             valInput.value = ''; 
             document.getElementById('liveSqFt').innerText = '0.00';
             
-            // NEW: Hide the gold upsell button after sending to Godown!
             document.getElementById('scrapSuggestionBox').innerHTML = '';
             
             await saveToServer(); 
