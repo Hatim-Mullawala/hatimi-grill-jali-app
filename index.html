@@ -2123,17 +2123,18 @@ window.processGodownCut = async function(orderId) {
             btnElement.classList.add('active');
             window.scrollTo({ top: 0, behavior: 'auto' });
         };
-// ==========================================
-        // 🔔 ONESIGNAL CLOUD NOTIFICATION ENGINE
-        // ==========================================
-        window.enableNativeNotifications = async function() {
+window.enableNativeNotifications = async function() {
             window.OneSignalDeferred.push(async function(OneSignal) {
-                // This officially subscribes the phone to your OneSignal Cloud!
-                await OneSignal.Notifications.requestPermission();
-                if (OneSignal.Notifications.permission === "granted") {
-                    showNotification("✅ OneSignal Cloud Push Enabled!", false);
-                } else {
-                    showNotification("❌ Permission denied. Check site settings.", true);
+                try {
+                    // 🚀 OneSignal v16 returns true/false directly
+                    const permissionGranted = await OneSignal.Notifications.requestPermission();
+                    if (permissionGranted) {
+                        showNotification("✅ OneSignal Cloud Push Enabled!", false);
+                    } else {
+                        showNotification("❌ Permission was denied or dismissed.", true);
+                    }
+                } catch (err) {
+                    showNotification("❌ Error: " + err.message, true);
                 }
             });
         };
