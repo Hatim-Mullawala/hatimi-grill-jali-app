@@ -784,8 +784,8 @@
         let isSyncing = false; 
         let hasLoadedData = false; // 🛡️ NEW: THE DATA GUARD FLAG
 
-        // 1. SAVE TO CLOUD
-        window.saveToServer = async function() {
+        // 1. SAVE TO CLOUD (WITH PUSH NOTIFICATION TRIGGER)
+        window.saveToServer = async function(alertMessage = null) {
             // 🛡️ DATA GUARD: Refuse to save if we haven't successfully loaded the data first!
             if (!hasLoadedData) {
                 console.warn("🛡️ Safety Lock: Refusing to save to prevent wiping the database.");
@@ -802,7 +802,10 @@
                         offcuts: offcuts,
                         dealerDeliveries: dealerDeliveries,
                         activeQueue: activeQueue, 
-                        cutLogs: cutLogs          
+                        cutLogs: cutLogs,
+                        // 🚀 NEW: Send the alert command to Google's Server!
+                        triggerPushAlert: alertMessage !== null,
+                        alertMessage: alertMessage || ""
                     };
                     
                     await fetch(GOOGLE_APP_URL, {
@@ -1732,7 +1735,12 @@
 
             if (!isNaN(val) && val > 0) {
                 const lengthFt = unit === 'in' ? parseFloat((val / 12).toFixed(2)) : val;
-                currentCustomerCart.push({ width: width, length: lengthFt });
+                const qtyInput = document.getElementById('reqQty');
+                const qty = parseInt(qtyInput ? qtyInput.value : 1) || 1;
+                
+                for (let i = 0; i < qty; i++) {
+                    currentCustomerCart.push({ width: width, length: lengthFt });
+                }
             }
 
             if (currentCustomerCart.length === 0) {
@@ -1744,13 +1752,12 @@
             const customer = customerInput.value ? customerInput.value : "Walk-in Customer";
             let summaryText = "";
 
-            // 🚀 UPGRADED: Professional Time Format (e.g., "10 Sep, 10:45 PM")
             const timeNow = new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true });
 
             currentCustomerCart.forEach((item, index) => {
                 let queueEntry = {
                     id: Date.now().toString() + "-" + index, 
-                    time: timeNow, // 🚀 Saved cleanly here!
+                    time: timeNow, 
                     customer: customer,
                     reqWidth: item.width,
                     reqLength: item.length 
@@ -1765,16 +1772,20 @@
             currentCustomerCart = []; 
             customerInput.value = ''; 
             valInput.value = ''; 
-            document.getElementById('liveSqFt').innerText = '0.00';
+            const qtyInput = document.getElementById('reqQty');
+            if (qtyInput) qtyInput.value = '1';
             
+            document.getElementById('liveSqFt').innerText = '0.00';
             document.getElementById('scrapSuggestionBox').innerHTML = '';
             
-            await saveToServer(); 
+            // 🚀 NEW: Generate the message and pass it to the server!
+            const pushMessage = `${customer} needs ${totalSent} size(s):\n${summaryText.slice(0, -2)}`;
+            await window.saveToServer(pushMessage); 
+            
             renderUI();
             window.renderCart(); 
             showNotification(`Sent ${totalSent} requirement(s) to Godown screen!`, false);
-            
-                    };
+        };
 
         // --- DELETE CUT LOG ---
         let logToDelete = null; 
