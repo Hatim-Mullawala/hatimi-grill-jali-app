@@ -820,8 +820,7 @@
             }, 800); 
         };
 
-        // 2. LOAD FROM CLOUD 
-        window.loadFromServer = async function(isSilent = false) {
+       window.loadFromServer = async function(isSilent = false) {
             if (isSilent && isSyncing) return; 
 
             try {
@@ -835,20 +834,29 @@
                 if (data.fullStock) fullStock = data.fullStock;
                 if (data.offcuts) offcuts = data.offcuts;
                 if (data.dealerDeliveries) dealerDeliveries = data.dealerDeliveries;
+                
                 if (data.activeQueue) {
-                    // 🚀 TRIGGER NOTIFICATION IF THE QUEUE GREW
-                    if (hasLoadedData && data.activeQueue.length > lastQueueLength) {
-                        const newOrdersCount = data.activeQueue.length - lastQueueLength;
-                        const latestOrder = data.activeQueue[data.activeQueue.length - 1];
-                        window.triggerGodownNotification(newOrdersCount, latestOrder.customer);
+                    // 🛡️ BULLETPROOF NOTIFICATION ENGINE
+                    try {
+                        window.lastQueueLength = window.lastQueueLength || 0;
+                        if (hasLoadedData && data.activeQueue.length > window.lastQueueLength) {
+                            const newOrdersCount = data.activeQueue.length - window.lastQueueLength;
+                            const latestOrder = data.activeQueue[data.activeQueue.length - 1];
+                            if (typeof window.triggerGodownNotification === 'function') {
+                                window.triggerGodownNotification(newOrdersCount, latestOrder.customer || 'Customer');
+                            }
+                        }
+                        window.lastQueueLength = data.activeQueue.length;
+                    } catch (e) { 
+                        console.error("Alert Error:", e); 
                     }
                     
                     activeQueue = data.activeQueue; 
-                    lastQueueLength = activeQueue.length; // Update memory
                 }
+                
                 if (data.cutLogs) cutLogs = data.cutLogs;             
 
-                hasLoadedData = true; // 🛡️ DATA GUARD UNLOCKED: We successfully got the data!
+                hasLoadedData = true; 
 
                 renderUI();
                 if(typeof window.renderCart === 'function') window.renderCart();
@@ -857,7 +865,13 @@
                 if (!isSilent) showNotification("Cloud Sync Complete!", false);
             } catch (error) {
                 console.error("Load Failed:", error);
-                if (!isSilent) showNotification("Offline Mode: Using local data.", true);
+                
+                // 🚀 UPGRADED ERROR CATCHER: Tells you if it's a code bug or actual internet issue
+                if (error instanceof ReferenceError || error instanceof TypeError) {
+                    if (!isSilent) showNotification("❌ Code Error: " + error.message, true);
+                } else {
+                    if (!isSilent) showNotification("Offline Mode: Using local data.", true);
+                }
             }
         };
 
