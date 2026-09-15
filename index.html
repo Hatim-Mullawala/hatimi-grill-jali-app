@@ -455,9 +455,12 @@
     <!-- ========================================== -->
     <div id="page-cutting" class="app-page active">
         
-        <!-- GODOWN QUEUE -->
+       <!-- GODOWN QUEUE -->
         <div class="panel godown-panel">
-            <h3>🔴 Live Godown Orders (To Be Cut)</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ffcccc; padding-bottom: 10px; margin-bottom: 15px;">
+                <h3 style="margin: 0; border: none; padding: 0; color: #cc0000;">🔴 Live Godown Orders</h3>
+                <button onclick="window.enableNativeNotifications()" style="background: #10b981; color: white; border: none; border-radius: 4px; padding: 6px 12px; font-weight: bold; cursor: pointer; font-size: 12px; box-shadow: 0 2px 4px rgba(16,185,129,0.2);">🔔 Enable Alerts</button>
+            </div>
             <div id="godownQueue" class="queue-container"></div>
         </div>
         
@@ -484,7 +487,7 @@
                         </select>
                     </div>
 
-                    <!-- Wrapper Div: Removed margin-bottom so it sits perfectly flush -->
+                    <!-- Length -->
                     <div style="flex: 1 1 180px;">
                         <label style="font-weight: bold; font-size: 13px; color: var(--navy); display: block; margin-bottom: 5px;">Length Needed:</label>
                         <div style="display: flex; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; height: 45px; width: 100%;">
@@ -494,6 +497,12 @@
                                 <option value="ft">ft</option>
                             </select>
                         </div>
+                    </div>
+
+                    <!-- 🚀 NEW: Quantity Multiplier -->
+                    <div style="flex: 1; min-width: 80px;">
+                        <label style="font-weight: bold; color: var(--navy); font-size: 13px; display: block; margin-bottom: 5px;">Qty:</label>
+                        <input type="number" id="reqQty" value="1" min="1" step="1" style="width: 100%; height: 45px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 16px; font-weight: bold; color: var(--navy); text-align: center; outline: none;">
                     </div>
 
                     <!-- Live Area -->
@@ -615,19 +624,35 @@
             </div>
         </div> <!-- PERFECTLY CLOSED grid-layout -->
     </div> <!-- PERFECTLY CLOSED page-inventory -->
- <!-- ========================================== -->
-    <!-- 📄 PAGE 3: HISTORY & LEDGERS               -->
-    <!-- ========================================== -->
-    <div id="page-logs" class="app-page">
-        <div class="panel" style="grid-column: 1 / -1;">
-            <h3>Daily Cut & Sales Log</h3>
-            <table>
-                <thead>
-                    <tr><th>Date & Time</th><th>Customer</th><th>Size Cut</th><th>Source Piece</th><th>Leftover Saved</th><th>Action</th></tr>
-                </thead>
-                <tbody id="logTable"></tbody>
-            </table>
-        </div>
+<!-- ========================================== -->
+        <!-- 📄 PAGE 3: HISTORY & LEDGERS               -->
+        <!-- ========================================== -->
+        <div id="page-logs" class="app-page">
+            
+            <!-- 🚀 UPGRADED LOG PANEL WITH DATE PICKER -->
+            <div class="panel" style="grid-column: 1 / -1;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 15px;">
+                    <h3 style="margin: 0; border: none; padding: 0; color: var(--navy);">Daily Cut Log</h3>
+                    
+                    <div style="display: flex; gap: 10px; align-items: center; background: #f8fafc; padding: 6px 12px; border-radius: 8px; border: 1px solid #cbd5e1;">
+                        <label style="font-size: 12px; font-weight: 800; color: #64748b; text-transform: uppercase;">Date:</label>
+                        <input type="date" id="logDatePicker" onchange="window.filterLogsByDate(this.value)" style="padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: inherit; font-size: 14px; font-weight: bold; color: var(--navy); outline: none; cursor: pointer;">
+                        <button onclick="window.resetLogDate()" style="background: var(--navy); color: white; border: none; border-radius: 4px; padding: 8px 12px; font-size: 12px; font-weight: bold; cursor: pointer; text-transform: uppercase; box-shadow: 0 2px 4px rgba(15,23,42,0.2);">Today</button>
+                    </div>
+                </div>
+
+                <!-- ADDED A SCROLL WINDOW SO IT NEVER GETS TOO LONG -->
+                <div class="scrollable-table-container" style="max-height: 450px; padding: 0;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead class="sticky-header">
+                            <tr>
+                                <th>Time</th><th>Customer</th><th>Size Cut</th><th>Source Piece</th><th>Leftover Saved</th><th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logTable"></tbody>
+                    </table>
+                </div>
+            </div>
 
         <!-- DEALER DELIVERY LOG -->
         <div class="panel" style="margin-top: 25px; border-top: 4px solid var(--navy);">
@@ -810,7 +835,17 @@
                 if (data.fullStock) fullStock = data.fullStock;
                 if (data.offcuts) offcuts = data.offcuts;
                 if (data.dealerDeliveries) dealerDeliveries = data.dealerDeliveries;
-                if (data.activeQueue) activeQueue = data.activeQueue; 
+                if (data.activeQueue) {
+                    // 🚀 TRIGGER NOTIFICATION IF THE QUEUE GREW
+                    if (hasLoadedData && data.activeQueue.length > lastQueueLength) {
+                        const newOrdersCount = data.activeQueue.length - lastQueueLength;
+                        const latestOrder = data.activeQueue[data.activeQueue.length - 1];
+                        window.triggerGodownNotification(newOrdersCount, latestOrder.customer);
+                    }
+                    
+                    activeQueue = data.activeQueue; 
+                    lastQueueLength = activeQueue.length; // Update memory
+                }
                 if (data.cutLogs) cutLogs = data.cutLogs;             
 
                 hasLoadedData = true; // 🛡️ DATA GUARD UNLOCKED: We successfully got the data!
@@ -972,13 +1007,26 @@
             const width = parseFloat(inputWidth.value) || 0;
             const val = parseFloat(inputValue.value) || 0;
             const unit = inputUnit.value;
+            const qtyInput = document.getElementById('reqQty');
+            const qty = parseInt(qtyInput ? qtyInput.value : 1) || 1;
             
             const ft = unit === 'in' ? val / 12 : val;
-            displaySqFt.innerText = (width * ft).toFixed(2);
             
-            // 🚀 Trigger the Upsell Engine every time you type!
+            // 🚀 Multiplies total square feet by the Quantity
+            displaySqFt.innerText = (width * ft * qty).toFixed(2);
+            
             window.checkScrapSuggestions();
         };
+
+        if (inputValue) inputValue.addEventListener('input', window.updateLiveSqFt);
+        if (inputUnit) inputUnit.addEventListener('change', window.updateLiveSqFt);
+        if (inputWidth) inputWidth.addEventListener('change', window.updateLiveSqFt);
+        if (inputWidth) inputWidth.addEventListener('input', window.updateLiveSqFt);
+        
+        // Listeners for the new Qty box
+        const inputQty = document.getElementById('reqQty');
+        if (inputQty) inputQty.addEventListener('input', window.updateLiveSqFt);
+        if (inputQty) inputQty.addEventListener('change', window.updateLiveSqFt);
 
       // --- NEW: SMART UPSELL LOGIC (MOBILE CHIP DESIGN) ---
         window.checkScrapSuggestions = function() {
@@ -1053,10 +1101,29 @@
         if (inputUnit) inputUnit.addEventListener('change', window.updateLiveSqFt);
         if (inputWidth) inputWidth.addEventListener('change', window.updateLiveSqFt);
         if (inputWidth) inputWidth.addEventListener('input', window.updateLiveSqFt);
+// ==========================================
+        // 🚀 GODOWN DROPDOWN OVERRIDE MEMORY
+        // ==========================================
+        window.manualGodownSources = window.manualGodownSources || {};
 
+        window.changeGodownSource = function(orderId, newSource) {
+            window.manualGodownSources[orderId] = newSource;
+            renderUI(); // Instantly redraws the screen with the new math!
+        };
 
-// --- MASTER UI RENDERER ---
-        function renderUI() {
+        // ==========================================
+        // --- MASTER UI RENDERER ---
+        // ==========================================
+        window.renderUI = function() {
+            // 🛡️ BULLETPROOF SAFETY: Ensure memory exists so the app never crashes
+            window.manualGodownSources = window.manualGodownSources || {};
+            
+            // 🚀 VIRTUAL SCRAP MEMORY
+            let virtualScrapInches = {};
+            offcuts.forEach(o => {
+                virtualScrapInches[o.id] = Math.round(parseFloat(o.length) * 12);
+            });
+            
             // 1. Draw Godown Queue
             const queueContainer = document.getElementById('godownQueue');
             if(queueContainer) {
@@ -1072,8 +1139,6 @@
                     });
 
                     for (const [customerName, items] of Object.entries(groupedOrders)) {
-                        
-                        // 🚀 GRAB THE TIME FROM THE ORDER
                         const orderTime = items[0].time || 'Recent Order';
 
                         let cardHTML = `
@@ -1098,7 +1163,6 @@
                                             </h4>
                                             <button data-name="${customerName}" onclick="window.startEditingGodownName(this.getAttribute('data-name'))" style="background: white; border: 1px solid #cbd5e1; font-size: 11px; cursor: pointer; padding: 4px 12px; color: #64748b; border-radius: 20px; font-weight: 700; transition: background 0.2s; text-transform: uppercase;">Edit ✏️</button>
                                         </div>
-                                        <!-- 🚀 SHOW THE TIME RIGHT HERE -->
                                         <div style="font-size: 11px; color: #94a3b8; font-weight: 700; letter-spacing: 0.5px;">🕒 ADDED: ${orderTime}</div>
                                     </div>
                                     <span style="background: var(--navy, #0f172a); color: white; font-size: 11px; padding: 4px 10px; border-radius: 12px; font-weight: 800; letter-spacing: 0.5px; box-shadow: 0 2px 4px rgba(15, 23, 42, 0.2); height: fit-content;">${items.length} ITEM(S)</span>
@@ -1115,52 +1179,76 @@
                             const borderStyle = isLast ? '' : 'border-bottom: 2px dashed #e2e8f0; padding-bottom: 20px; margin-bottom: 4px;';
                             const lengthInches = Math.round(parseFloat(order.reqLength) * 12);
                             
-                            let validOffcuts = offcuts.filter(o => {
-                                let offcutInches = Math.round(parseFloat(o.length) * 12);
-                                return parseFloat(o.width) === parseFloat(order.reqWidth) && offcutInches >= lengthInches;
-                            });
-
+                            let manualSource = window.manualGodownSources[order.id];
+                            
                             let bestScrap = null;
                             let minWaste = Infinity;
+                            let forceNew = false;
 
-                            validOffcuts.forEach(scrap => {
-                                let scrapInches = Math.round(parseFloat(scrap.length) * 12);
-                                let waste = scrapInches - lengthInches;
-                                if (waste >= 0 && waste < minWaste) {
-                                    minWaste = waste;
-                                    bestScrap = scrap;
+                            if (manualSource === 'new') {
+                                forceNew = true;
+                            } else if (manualSource) {
+                                let forcedScrap = offcuts.find(o => o.id === manualSource);
+                                if (forcedScrap && virtualScrapInches[forcedScrap.id] >= lengthInches) {
+                                    bestScrap = forcedScrap;
                                 }
-                            });
+                            }
+
+                            if (!bestScrap && !forceNew) {
+                                let validOffcuts = offcuts.filter(o => {
+                                    let availableInches = virtualScrapInches[o.id];
+                                    return parseFloat(o.width) === parseFloat(order.reqWidth) && availableInches >= lengthInches;
+                                });
+
+                                validOffcuts.forEach(scrap => {
+                                    let availableInches = virtualScrapInches[scrap.id];
+                                    let waste = availableInches - lengthInches;
+                                    if (waste >= 0 && waste < minWaste) {
+                                        minWaste = waste;
+                                        bestScrap = scrap;
+                                    }
+                                });
+                            }
 
                             let suggestionHTML = '';
                             let sourceOptionsHTML = '';
 
                             if (bestScrap) {
-                                let bestScrapInches = Math.round(parseFloat(bestScrap.length) * 12);
+                                let startingInches = virtualScrapInches[bestScrap.id];
+                                let leftover = startingInches - lengthInches;
+                                
+                                virtualScrapInches[bestScrap.id] -= lengthInches;
+
                                 suggestionHTML = `
                                     <div style="background: #ecfdf5; border: 1px solid #10b981; border-radius: 6px; padding: 10px 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
                                         <div style="display: flex; align-items: center; gap: 8px;">
                                             <span style="font-size: 18px;">♻️</span>
-                                            <span style="font-size: 14px; color: #064e3b; font-weight: 800; text-transform: uppercase;">Scrap #${bestScrap.id} <span style="color:#10b981; font-weight: 700;">(${bestScrapInches}")</span></span>
+                                            <span style="font-size: 14px; color: #064e3b; font-weight: 800; text-transform: uppercase;">Scrap #${bestScrap.id} <span style="color:#10b981; font-weight: 700;">(Avail: ${startingInches}")</span></span>
                                         </div>
-                                        <span style="background: #d1fae5; color: #047857; font-size: 11px; padding: 3px 6px; border-radius: 4px; font-weight: 800; letter-spacing: 0.5px;">${minWaste}" WASTE</span>
+                                        <span style="background: #d1fae5; color: #047857; font-size: 11px; padding: 3px 6px; border-radius: 4px; font-weight: 800; letter-spacing: 0.5px;">LEAVES ${leftover}"</span>
                                     </div>
                                 `;
-                                sourceOptionsHTML += `<option value="new">📦 Force New 12ft Sheet</option>`;
                             } else {
+                                forceNew = true;
                                 suggestionHTML = `
                                     <div style="background: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 6px; padding: 10px 12px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
                                         <span style="font-size: 18px;">📦</span>
                                         <span style="font-size: 14px; color: #075985; font-weight: 800; text-transform: uppercase;">New 12ft Sheet</span>
                                     </div>
                                 `;
-                                sourceOptionsHTML += `<option value="new" selected>📦 Use New 12ft Sheet</option>`;
                             }
                             
-                            validOffcuts.forEach(scrap => {
-                                let scrapInches = Math.round(parseFloat(scrap.length) * 12);
+                            let allWidthScraps = offcuts.filter(o => parseFloat(o.width) === parseFloat(order.reqWidth));
+                            let isNewSelected = forceNew ? 'selected' : '';
+                            sourceOptionsHTML += `<option value="new" ${isNewSelected}>📦 Use New 12ft Sheet</option>`;
+                            
+                            allWidthScraps.forEach(scrap => {
+                                let scrapOriginalInches = Math.round(parseFloat(scrap.length) * 12);
+                                let remaining = virtualScrapInches[scrap.id];
                                 let isSelected = (bestScrap && bestScrap.id === scrap.id) ? 'selected' : '';
-                                sourceOptionsHTML += `<option value="${scrap.id}" ${isSelected}>♻️ Scrap ${scrap.id} (${scrapInches}in)</option>`;
+                                let usedText = (remaining < scrapOriginalInches) ? ` (Only ${remaining}" left)` : '';
+                                
+                                sourceOptionsHTML += `<option value="${scrap.id}" ${isSelected}>♻️ Scrap ${scrap.id} - ${scrapOriginalInches}in Total${usedText}</option>`;
                             });
 
                             cardHTML += `
@@ -1181,7 +1269,7 @@
                                     
                                     <div style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 10px;">
                                         <label style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase;">Confirm Source Material:</label>
-                                        <select id="godownSource_${order.id}" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 14px; font-weight: bold; color: var(--navy); background: #f8fafc; outline: none;">
+                                        <select id="godownSource_${order.id}" onchange="window.changeGodownSource('${order.id}', this.value)" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 14px; font-weight: bold; color: var(--navy); background: #f8fafc; outline: none;">
                                             ${sourceOptionsHTML}
                                         </select>
                                     </div>
@@ -1296,32 +1384,85 @@
                     });
                 }
             }
-            // 4. Draw Logs
+           // 4. Draw Logs (WITH DATE FILTER)
             const logBody = document.getElementById('logTable');
+            const datePicker = document.getElementById('logDatePicker');
+
             if(logBody) {
                 logBody.innerHTML = '';
-                let reversedLogs = [...cutLogs].reverse().slice(0, 15); 
+                
+                // Helper to get local date as YYYY-MM-DD
+                window.getLocalDateString = function(dateObj) {
+                    const year = dateObj.getFullYear();
+                    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                    const day = String(dateObj.getDate()).padStart(2, '0');
+                    return `${year}-${month}-${day}`;
+                };
+
+                // Initialize the filter date to "Today" if it hasn't been set yet
+                if (!window.currentLogFilterDate) {
+                    window.currentLogFilterDate = window.getLocalDateString(new Date());
+                }
+
+                // Make sure the calendar box matches the currently selected date
+                if (datePicker && datePicker.value !== window.currentLogFilterDate) {
+                    datePicker.value = window.currentLogFilterDate;
+                }
+
+                // 🚀 FILTER THE LOGS BY THE SELECTED DATE
+                let filteredLogs = cutLogs.filter(log => {
+                    let logDate = new Date(log.time);
+                    if (isNaN(logDate)) return false; 
+                    let logDateStr = window.getLocalDateString(logDate);
+                    return logDateStr === window.currentLogFilterDate;
+                });
+
+                // Reverse to show newest at the top
+                let reversedLogs = filteredLogs.reverse(); 
+                
                 if(reversedLogs.length === 0) {
-                    logBody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#999; padding: 15px;">No cuts logged yet.</td></tr>';
+                    logBody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding: 40px; font-weight: 800; background: #f8fafc; border-radius: 8px;">No cuts found for this date.</td></tr>';
                 } else {
+                    let htmlOutput = '';
+                    
                     reversedLogs.forEach(log => {
+                        let d = new Date(log.time);
+                        let timeStr = isNaN(d) ? log.time : d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
                         const logLengthInches = Math.round(parseFloat(log.length) * 12);
-                        logBody.innerHTML += `
+                        
+                        htmlOutput += `
                             <tr>
-                                <td style="font-size:12px; color:#666; white-space: nowrap; padding-right: 20px;">${log.time}</td>
+                                <td style="font-size:13px; color:#64748b; font-weight:700; white-space: nowrap; padding: 12px 15px;">
+                                    🕒 ${timeStr}
+                                </td>
                                 <td style="white-space: nowrap; padding-right: 20px;"><strong>${log.customer || 'Walk-in'}</strong></td>
                                 <td style="white-space: nowrap; padding-right: 20px;">
                                     <strong style="color: #cc0000; font-size: 15px;">${log.width} ft × ${logLengthInches} in</strong>
-                                    <div style="font-size: 12px; color: #888; margin-top: 2px;">(${log.width} x ${log.length} ft)</div>
+                                    <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">(${log.width} x ${log.length} ft)</div>
                                 </td>
-                                <td style="white-space: nowrap; padding-right: 20px;">${log.source}</td>
-                                <td style="white-space: nowrap; padding-right: 20px;">${log.leftover}</td>
-                                <td style="white-space: nowrap;"><button class="btn-delete" onclick="window.deleteCut('${log.time}')">🗑️ Delete</button></td>
+                                <td style="white-space: nowrap; padding-right: 20px; font-weight: 600; color: #475569;">${log.source}</td>
+                                <td style="white-space: nowrap; padding-right: 20px; font-size: 13px;">${log.leftover}</td>
+                                <td style="white-space: nowrap;"><button class="btn-delete" onclick="window.deleteCut('${log.time}')" style="padding: 6px 12px; font-size: 13px; font-weight: bold;">🗑️ Delete</button></td>
                             </tr>`;
                     });
+                    
+                    logBody.innerHTML = htmlOutput;
                 }
             }
-        }
+        }; // <-- End of window.renderUI
+        // ==========================================
+        // 📅 DATE PICKER CONTROLS
+        // ==========================================
+        window.filterLogsByDate = function(dateStr) {
+            if (!dateStr) return;
+            window.currentLogFilterDate = dateStr;
+            window.renderUI();
+        };
+
+        window.resetLogDate = function() {
+            window.currentLogFilterDate = window.getLocalDateString(new Date());
+            window.renderUI();
+        };
         // --- HELPERS ---
         function generateId() {
             let maxId = 0;
@@ -1398,6 +1539,8 @@
             const valInput = document.getElementById('reqLengthValue');
             const val = parseFloat(valInput.value);
             const unit = document.getElementById('reqLengthUnit').value;
+            const qtyInput = document.getElementById('reqQty');
+            const qty = parseInt(qtyInput ? qtyInput.value : 1) || 1;
 
             if (isNaN(val) || val <= 0) {
                 showNotification("<strong>Error:</strong> Please enter a valid length.", true);
@@ -1405,13 +1548,18 @@
             }
 
             const lengthFt = unit === 'in' ? parseFloat((val / 12).toFixed(2)) : val;
-            currentCustomerCart.push({ width: width, length: lengthFt });
+            
+            // 🚀 NEW: Loop to add multiple sizes instantly based on Qty
+            for (let i = 0; i < qty; i++) {
+                currentCustomerCart.push({ width: width, length: lengthFt });
+            }
             
             valInput.value = ''; 
+            if (qtyInput) qtyInput.value = '1'; // Reset quantity box to 1
             document.getElementById('liveSqFt').innerText = '0.00';
             document.getElementById('scrapSuggestionBox').innerHTML = '';
             
-            editingCartIndex = -1; // Reset edit state if adding new
+            editingCartIndex = -1;
             window.renderCart();
             saveToServer(); 
         };
@@ -1606,26 +1754,7 @@
             window.renderCart(); 
             showNotification(`Sent ${totalSent} requirement(s) to Godown screen!`, false);
             
-            // Notification
-            const oneSignalAppId = "f3b6b4a5-2fbd-417f-b990-14fa64d6d350";
-            const oneSignalRestApiKey = atob("eDdvbXFjdDVnanZ3dGtiZGdwY3Zja3ZzdW92ZWNwbnJxNG5jZ3RibGg0N2V5N3ZrcTIzeXluaDJ2NDVyeHdiYnRzZm03aHByejUzcTQ3ZTRxemJ5a2k2bXFlMnk=");
-            const notificationPayload = {
-                app_id: oneSignalAppId,
-                included_segments: ["Active Subscriptions"], 
-                headings: { en: "New Jali Order" },
-                contents: { en: `${customer} needs ${totalSent} size(s): ${summaryText.slice(0, -2)}.` }
-            };
-
-            try {
-                await fetch("https://onesignal.com/api/v1/notifications", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json; charset=utf-8", "Authorization": `Basic ${oneSignalRestApiKey}` },
-                    body: JSON.stringify(notificationPayload)
-                });
-            } catch (error) {
-                console.error("Error triggering OneSignal:", error);
-            }
-        };
+                    };
 
         // --- DELETE CUT LOG ---
         let logToDelete = null; 
@@ -1672,8 +1801,7 @@
             showNotification(`Added Scrap ${newId} (${width}ft × ${lengthInches}in) to inventory!`, false);
         };
 
-// --- GODOWN LOGIC (WITH OVERRIDE CONTROL & AUTO-DELETE) ---
-        window.processGodownCut = async function(orderId) {
+window.processGodownCut = async function(orderId) {
             const index = activeQueue.findIndex(o => o.id === orderId);
             if (index === -1) return;
             const order = activeQueue[index];
@@ -1681,7 +1809,7 @@
             const actualWidth = document.getElementById(`godownWidth_${orderId}`).value;
             const actualLengthInches = parseFloat(document.getElementById(`godownLengthInches_${orderId}`).value);
             const actualLengthFeet = parseFloat((actualLengthInches / 12).toFixed(2));
-            const sourceChoice = document.getElementById(`godownSource_${orderId}`).value; // Read the dropdown
+            const sourceChoice = document.getElementById(`godownSource_${orderId}`).value; 
 
             if (isNaN(actualLengthFeet) || actualLengthFeet <= 0 || actualLengthFeet > 12) {
                 showNotification("<strong>Error:</strong> Godown entered an invalid cut length.", true);
@@ -1697,46 +1825,27 @@
                 leftover: ""
             };
 
-            let selectedScrap = null;
-            let forceNewSheet = false;
-
-            // 1. Determine what the employee actually held in their hands
-            if (sourceChoice === 'new') {
-                forceNewSheet = true;
-            } else if (sourceChoice !== 'auto') {
-                selectedScrap = offcuts.find(o => o.id === sourceChoice);
+            // Process based on EXACTLY what the dropdown says
+            if (sourceChoice !== 'new') {
+                let selectedScrap = offcuts.find(o => o.id === sourceChoice);
+                
+                if (selectedScrap) {
+                    let originalInches = Math.round(parseFloat(selectedScrap.length) * 12);
+                    let leftoverInches = originalInches - actualLengthInches;
+                    
+                    logEntry.source = `♻️ Offcut ${selectedScrap.id}`;
+                    
+                    // If there is 1 inch or less remaining, throw it in the trash
+                    if (leftoverInches <= 1) {
+                        logEntry.leftover = `None (Piece Fully Used)`;
+                        offcuts = offcuts.filter(o => o.id !== selectedScrap.id);
+                    } else {
+                        selectedScrap.length = parseFloat((leftoverInches / 12).toFixed(2));
+                        logEntry.leftover = `${selectedScrap.length} ft (${leftoverInches} in)`;
+                    }
+                }
+                
             } else {
-                // Auto Mode: Find best fit if they didn't override
-                let validOffcuts = offcuts.filter(o => {
-                    let offcutInches = Math.round(parseFloat(o.length) * 12);
-                    return parseFloat(o.width) === parseFloat(actualWidth) && offcutInches >= actualLengthInches;
-                });
-                if (validOffcuts.length > 0) {
-                    validOffcuts.sort((a, b) => parseFloat(a.length) - parseFloat(b.length));
-                    selectedScrap = validOffcuts[0];
-                } else {
-                    forceNewSheet = true;
-                }
-            }
-
-            // 2. Process the cut based on the decision
-            if (selectedScrap) {
-                let originalInches = Math.round(parseFloat(selectedScrap.length) * 12);
-                let leftoverInches = originalInches - actualLengthInches;
-                
-                logEntry.source = `♻️ Offcut ${selectedScrap.id}`;
-                
-                // If there is 1 inch or less remaining, throw it in the trash
-                if (leftoverInches <= 1) {
-                    logEntry.leftover = `None (Piece Fully Used)`;
-                    offcuts = offcuts.filter(o => o.id !== selectedScrap.id); // Permanently deletes it
-                } else {
-                    // Otherwise, just reduce the size of the existing piece
-                    selectedScrap.length = parseFloat((leftoverInches / 12).toFixed(2));
-                    logEntry.leftover = `${selectedScrap.length} ft (${leftoverInches} in)`;
-                }
-                
-            } else if (forceNewSheet || fullStock[actualWidth] > 0) {
                 if (fullStock[actualWidth] <= 0) {
                     showNotification(`<strong>Out of Stock!</strong> Cannot cut new ${actualWidth}ft sheet.`, true);
                     return;
@@ -1756,7 +1865,9 @@
                 }
             }
 
-            // 3. Save and finalize
+            // Clean up overrides to prevent memory leaks
+            delete window.manualGodownSources[orderId];
+
             cutLogs.push(logEntry);
             activeQueue.splice(index, 1);
             
@@ -2000,6 +2111,44 @@
             document.getElementById(pageId).classList.add('active');
             btnElement.classList.add('active');
             window.scrollTo({ top: 0, behavior: 'auto' });
+        };
+        // ==========================================
+        // 🔔 NATIVE ANDROID NOTIFICATION ENGINE
+        // ==========================================
+        let lastQueueLength = 0; // Remembers the previous order count
+
+        window.enableNativeNotifications = function() {
+            if ("Notification" in window) {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        showNotification("✅ Phone Notifications Enabled!", false);
+                    } else {
+                        showNotification("❌ You blocked notifications in your browser.", true);
+                    }
+                });
+            } else {
+                showNotification("❌ Your browser doesn't support notifications.", true);
+            }
+        };
+
+        window.triggerGodownNotification = function(newOrderCount, latestCustomer) {
+            if ("Notification" in window && Notification.permission === "granted") {
+                const title = "🚨 New Jali Order!";
+                const options = {
+                    body: `${latestCustomer} added ${newOrderCount} new size(s).`,
+                    icon: "logo.png",
+                    vibrate: [200, 100, 200, 100, 200]
+                };
+
+                // Forces the notification into the native Android system tray
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.ready.then(function(registration) {
+                        registration.showNotification(title, options);
+                    });
+                } else {
+                    new Notification(title, options);
+                }
+            }
         };
 </script>
     </body>
