@@ -2132,44 +2132,61 @@ window.processGodownCut = async function(orderId) {
             btnElement.classList.add('active');
             window.scrollTo({ top: 0, behavior: 'auto' });
         };
-        // ==========================================
-        // 🔔 NATIVE ANDROID NOTIFICATION ENGINE
-        // ==========================================
-        let lastQueueLength = 0; // Remembers the previous order count
+       // ==========================================
+            // 🔔 NATIVE ANDROID NOTIFICATION ENGINE
+            // ==========================================
+            let lastQueueLength = 0;
 
-        window.enableNativeNotifications = function() {
-            if ("Notification" in window) {
-                Notification.requestPermission().then(permission => {
-                    if (permission === "granted") {
-                        showNotification("✅ Phone Notifications Enabled!", false);
-                    } else {
-                        showNotification("❌ You blocked notifications in your browser.", true);
-                    }
-                });
-            } else {
-                showNotification("❌ Your browser doesn't support notifications.", true);
-            }
-        };
-
-        window.triggerGodownNotification = function(newOrderCount, latestCustomer) {
-            if ("Notification" in window && Notification.permission === "granted") {
-                const title = "🚨 New Jali Order!";
-                const options = {
-                    body: `${latestCustomer} added ${newOrderCount} new size(s).`,
-                    icon: "logo.png",
-                    vibrate: [200, 100, 200, 100, 200]
-                };
-
-                // Forces the notification into the native Android system tray
-                if ('serviceWorker' in navigator) {
-                    navigator.serviceWorker.ready.then(function(registration) {
-                        registration.showNotification(title, options);
-                    });
-                } else {
-                    new Notification(title, options);
+            window.enableNativeNotifications = async function() {
+                if (!("Notification" in window)) {
+                    showNotification("❌ Your browser doesn't support notifications.", true);
+                    return;
                 }
-            }
-        };
+
+                // 🚀 1. Install the background file Android needs!
+                if ('serviceWorker' in navigator) {
+                    try {
+                        await navigator.serviceWorker.register('./sw.js');
+                    } catch (err) {
+                        console.error("Service worker failed:", err);
+                        showNotification("❌ Failed to install background worker.", true);
+                        return;
+                    }
+                }
+
+                // 2. Ask the user for permission
+                const permission = await Notification.requestPermission();
+                if (permission === "granted") {
+                    showNotification("✅ Phone Notifications Enabled!", false);
+                } else {
+                    showNotification("❌ You blocked notifications in your browser.", true);
+                }
+            };
+
+            window.triggerGodownNotification = async function(newOrderCount, latestCustomer) {
+                if ("Notification" in window && Notification.permission === "granted") {
+                    const title = "🚨 New Jali Order!";
+                    const options = {
+                        body: `${latestCustomer} added ${newOrderCount} new size(s).`,
+                        icon: "logo.png",
+                        vibrate: [200, 100, 200, 100, 200]
+                    };
+
+                    if ('serviceWorker' in navigator) {
+                        // 🚀 ANDROID REQUIREMENT: Show notification through the Service Worker
+                        try {
+                            const registration = await navigator.serviceWorker.ready;
+                            registration.showNotification(title, options);
+                        } catch (e) {
+                            console.error("Failed to show Android notification:", e);
+                            new Notification(title, options); // Fallback for laptops
+                        }
+                    } else {
+                        // Standard desktop fallback
+                        new Notification(title, options);
+                    }
+                }
+            };
 </script>
     </body>
     </html>
