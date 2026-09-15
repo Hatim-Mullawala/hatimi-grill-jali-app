@@ -390,15 +390,15 @@
         </style>
         <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
         <script>
-            window.OneSignalDeferred = window.OneSignalDeferred || [];
-            OneSignalDeferred.push(async function(OneSignal) {
-                await OneSignal.init({
-                    appId: "f3b6b4a5-2fbd-417f-b990-14fa64d6d350",
-                    serviceWorkerParam: { scope: "/hatimi-grill-jali-app/" },
-                    serviceWorkerPath: "/hatimi-grill-jali-app/OneSignalSDKWorker.js" 
-                });
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        OneSignalDeferred.push(async function(OneSignal) {
+            await OneSignal.init({
+                appId: "f3b6b4a5-2fbd-417f-b990-14fa64d6d350",
+                serviceWorkerParam: { scope: "/hatimi-grill-jali-app/" },
+                serviceWorkerPath: "/hatimi-grill-jali-app/OneSignalSDKWorker.js" 
             });
-        </script>
+        });
+    </script>
     </head>
     <body>
     <!-- CUSTOM CONFIRM DELETE MODAL -->
