@@ -823,15 +823,14 @@
             }, 800); 
         };
 
-       window.loadFromServer = async function(isSilent = false) {
+      // ☁️ LOAD FROM CLOUD (Cleaned up for OneSignal)
+        window.loadFromServer = async function(isSilent = false) {
             if (isSilent && isSyncing) return; 
 
             try {
                 if (!isSilent) showNotification("Syncing with Cloud Database...", false);
 
                 const response = await fetch(GOOGLE_APP_URL, { redirect: 'follow' });
-                
-                // Read as text first so we can see if Google sent an error page instead of data
                 const textData = await response.text(); 
                 
                 let data;
@@ -846,25 +845,7 @@
                 if (data.fullStock) fullStock = data.fullStock;
                 if (data.offcuts) offcuts = data.offcuts;
                 if (data.dealerDeliveries) dealerDeliveries = data.dealerDeliveries;
-                
-                if (data.activeQueue) {
-                    try {
-                        window.lastQueueLength = window.lastQueueLength || 0;
-                        if (hasLoadedData && data.activeQueue.length > window.lastQueueLength) {
-                            const newOrdersCount = data.activeQueue.length - window.lastQueueLength;
-                            const latestOrder = data.activeQueue[data.activeQueue.length - 1];
-                            if (typeof window.triggerGodownNotification === 'function') {
-                                window.triggerGodownNotification(newOrdersCount, latestOrder.customer || 'Customer');
-                            }
-                        }
-                        window.lastQueueLength = data.activeQueue.length;
-                    } catch (e) { 
-                        console.error("Alert Error:", e); 
-                    }
-                    
-                    activeQueue = data.activeQueue; 
-                }
-                
+                if (data.activeQueue) activeQueue = data.activeQueue; 
                 if (data.cutLogs) cutLogs = data.cutLogs;             
 
                 hasLoadedData = true; 
@@ -876,7 +857,6 @@
                 if (!isSilent) showNotification("Cloud Sync Complete!", false);
             } catch (error) {
                 console.error("Load Failed:", error);
-                // 🚀 DIAGNOSTIC MODE: This will print the EXACT error to your screen in red
                 if (!isSilent) {
                     showNotification("❌ Sync Error: " + error.message, true);
                 }
@@ -2143,61 +2123,20 @@ window.processGodownCut = async function(orderId) {
             btnElement.classList.add('active');
             window.scrollTo({ top: 0, behavior: 'auto' });
         };
-       // ==========================================
-            // 🔔 NATIVE ANDROID NOTIFICATION ENGINE
-            // ==========================================
-            let lastQueueLength = 0;
-
-            window.enableNativeNotifications = async function() {
-                if (!("Notification" in window)) {
-                    showNotification("❌ Your browser doesn't support notifications.", true);
-                    return;
-                }
-
-                // 🚀 1. Install the background file Android needs!
-                if ('serviceWorker' in navigator) {
-                    try {
-                        await navigator.serviceWorker.register('./sw.js');
-                    } catch (err) {
-                        console.error("Service worker failed:", err);
-                        showNotification("❌ Failed to install background worker.", true);
-                        return;
-                    }
-                }
-
-                // 2. Ask the user for permission
-                const permission = await Notification.requestPermission();
-                if (permission === "granted") {
-                    showNotification("✅ Phone Notifications Enabled!", false);
+// ==========================================
+        // 🔔 ONESIGNAL CLOUD NOTIFICATION ENGINE
+        // ==========================================
+        window.enableNativeNotifications = async function() {
+            window.OneSignalDeferred.push(async function(OneSignal) {
+                // This officially subscribes the phone to your OneSignal Cloud!
+                await OneSignal.Notifications.requestPermission();
+                if (OneSignal.Notifications.permission === "granted") {
+                    showNotification("✅ OneSignal Cloud Push Enabled!", false);
                 } else {
-                    showNotification("❌ You blocked notifications in your browser.", true);
+                    showNotification("❌ Permission denied. Check site settings.", true);
                 }
-            };
-
-            window.triggerGodownNotification = async function(newOrderCount, latestCustomer) {
-                if ("Notification" in window && Notification.permission === "granted") {
-                    const title = "🚨 New Jali Order!";
-                    const options = {
-                        body: `${latestCustomer} added ${newOrderCount} new size(s).`,
-                        icon: "logo.png",
-                        vibrate: [200, 100, 200, 100, 200]
-                    };
-
-                    if ('serviceWorker' in navigator) {
-                        // 🚀 ANDROID REQUIREMENT: Show notification through the Service Worker
-                        try {
-                            const registration = await navigator.serviceWorker.ready;
-                            registration.showNotification(title, options);
-                        } catch (e) {
-                            console.error("Failed to show Android notification:", e);
-                            new Notification(title, options); // Fallback for laptops
-                        }
-                    } else {
-                        // Standard desktop fallback
-                        new Notification(title, options);
-                    }
-                }
-            };
+            });
+        };
 </script>
     </body>
     </html>
