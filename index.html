@@ -1534,6 +1534,36 @@
                 saveToServer(); // Sends the batch to Google Sheets in the background
             }
         };
+        function findBestScrap(requestedSizes, availableScraps) {
+  // 1. Calculate the total size the customer needs (e.g., 36 + 48 = 84)
+  const totalRequired = requestedSizes.reduce((sum, size) => sum + size, 0);
+
+  // 2. Filter out scraps that are too small
+  // (Assuming 'width' is the dimension you are cutting along. Change to 'length' if needed)
+  let validScraps = availableScraps.filter(scrap => scrap.width >= totalRequired);
+
+  // 3. If no scraps are big enough, return null
+  if (validScraps.length === 0) {
+    return null; 
+  }
+
+  // 4. Sort the valid scraps by the LEAST amount of waste (Closest to 0)
+  validScraps.sort((a, b) => {
+    let wasteA = a.width - totalRequired;
+    let wasteB = b.width - totalRequired;
+    return wasteA - wasteB;
+  });
+
+  // 5. The top result is our perfect match!
+  let bestScrap = validScraps[0];
+  let finalWaste = bestScrap.width - totalRequired;
+
+  return {
+    scrapId: bestScrap.id,
+    originalSize: bestScrap.width,
+    waste: finalWaste
+  };
+}
       // --- CART SYSTEM ---
         let editingCartIndex = -1; // 🚀 NEW: Tracks which row is currently being edited
 
