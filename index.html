@@ -1534,36 +1534,6 @@
                 saveToServer(); // Sends the batch to Google Sheets in the background
             }
         };
-        function findBestScrap(requestedSizes, availableScraps) {
-  // 1. Calculate the total size the customer needs (e.g., 36 + 48 = 84)
-  const totalRequired = requestedSizes.reduce((sum, size) => sum + size, 0);
-
-  // 2. Filter out scraps that are too small
-  // (Assuming 'width' is the dimension you are cutting along. Change to 'length' if needed)
-  let validScraps = availableScraps.filter(scrap => scrap.width >= totalRequired);
-
-  // 3. If no scraps are big enough, return null
-  if (validScraps.length === 0) {
-    return null; 
-  }
-
-  // 4. Sort the valid scraps by the LEAST amount of waste (Closest to 0)
-  validScraps.sort((a, b) => {
-    let wasteA = a.width - totalRequired;
-    let wasteB = b.width - totalRequired;
-    return wasteA - wasteB;
-  });
-
-  // 5. The top result is our perfect match!
-  let bestScrap = validScraps[0];
-  let finalWaste = bestScrap.width - totalRequired;
-
-  return {
-    scrapId: bestScrap.id,
-    originalSize: bestScrap.width,
-    waste: finalWaste
-  };
-}
       // --- CART SYSTEM ---
         let editingCartIndex = -1; // 🚀 NEW: Tracks which row is currently being edited
 
@@ -2078,7 +2048,69 @@ window.processGodownCut = async function(orderId) {
             container.innerHTML = finalHTML;
         };
 
+function smartScrapAllocator(requestedLengths, availableScraps) {
+    // 1. Clone the scraps pool so we can deduct from it dynamically 
+    // without messing up your live UI data
+    let scrapsPool = JSON.parse(JSON.stringify(availableScraps)); 
+    let assignments = [];
+    
+    // 2. Calculate the TOTAL length of all requested cuts combined
+    let totalLength = requestedLengths.reduce((sum, len) => sum + len, 0);
+    
+    // 3. FIRST PASS: Can a single scrap fit ALL cuts together?
+    let combinedScraps = scrapsPool.filter(s => s.length >= totalLength);
+    
+    if (combinedScraps.length > 0) {
+        // Sort by least waste
+        combinedScraps.sort((a, b) => (a.length - totalLength) - (b.length - totalLength));
+        let perfectScrap = combinedScraps[0];
+        
+        // Assign this perfect scrap to EVERY cut in the array
+        requestedLengths.forEach(cut => {
+            assignments.push({
+                cutSize: cut,
+                scrapId: perfectScrap.id,
+                availableInScrap: perfectScrap.length,
+                message: "Perfect Match! (Combined Cut)"
+            });
+        });
+        return assignments; // Exit early, we found zero waste!
+    }
 
+    // 4. SECOND PASS: If no single scrap fits all, process them individually
+    // Sort requested cuts from LARGEST to SMALLEST for better packing
+    let sortedCuts = [...requestedLengths].sort((a, b) => b - a);
+
+    sortedCuts.forEach(cut => {
+        let validScraps = scrapsPool.filter(s => s.length >= cut);
+        
+        if (validScraps.length > 0) {
+            // Sort by least waste
+            validScraps.sort((a, b) => (a.length - cut) - (b.length - cut));
+            let bestSingle = validScraps[0];
+            
+            assignments.push({
+                cutSize: cut,
+                scrapId: bestSingle.id,
+                availableInScrap: bestSingle.length,
+                message: `Leaves ${bestSingle.length - cut}" waste`
+            });
+            
+            // Deduct the used length from our pool so the next cut doesn't grab it too
+            bestSingle.length -= cut; 
+        } else {
+            // No scrap big enough, must use a fresh roll
+            assignments.push({
+                cutSize: cut,
+                scrapId: "FRESH ROLL",
+                availableInScrap: "N/A",
+                message: "Cut from new stock"
+            });
+        }
+    });
+    
+    return assignments;
+}
         // --- MANUAL PAST PURCHASE LOGIC ---
         window.addManualDelivery = async function() {
             const dateInput = document.getElementById('manualDeliveryDate').value;
