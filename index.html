@@ -430,6 +430,34 @@
             </div>
         </div>
     </div>
+    <!-- PROFESSIONAL DELIVERY DELETE MODAL -->
+    <div id="deliveryDeleteModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 420px; border-top: 5px solid #ef4444;">
+            <div style="background: #fef2f2; margin: -30px -30px 20px -30px; padding: 15px 20px; border-bottom: 1px solid #fee2e2; display: flex; align-items: center; gap: 10px; border-radius: 12px 12px 0 0;">
+                <span style="font-size: 22px;">🗑️</span>
+                <h3 style="margin: 0; color: #991b1b; font-size: 18px; font-weight: 700;">Delete Delivery Log?</h3>
+            </div>
+            
+            <p style="text-align: left; color: #475569; font-size: 15px; margin-bottom: 20px;">
+                Are you sure you want to permanently remove this delivery from the ledger?
+            </p>
+            
+            <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 15px; border-radius: 8px; text-align: left; margin-bottom: 25px; border-left: 4px solid #d97706;">
+                <strong style="color: var(--navy); display: block; margin-bottom: 10px; font-size: 14px;">📦 Stock Adjustment:</strong>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" id="revertStockCheckbox" checked style="accent-color: #ef4444; width: 18px; height: 18px; cursor: pointer;">
+                    <label for="revertStockCheckbox" style="font-size: 13px; color: #334155; font-weight: 600; cursor: pointer; user-select: none;">
+                        Also subtract these items from live stock
+                    </label>
+                </div>
+            </div>
+            
+            <div class="modal-actions" style="margin-top: 0;">
+                <button class="btn-cancel" onclick="window.closeDeliveryDeleteModal()">Cancel</button>
+                <button class="btn-confirm-delete" onclick="window.confirmDeliveryDeleteAction()">Confirm Delete</button>
+            </div>
+        </div>
+    </div>
 
     <!-- ========================================== -->
     <!-- 🌟 EXISTING HEADER (CENTERED ALIGNMENT)    -->
@@ -2206,9 +2234,10 @@ window.enableNativeNotifications = async function() {
                 }
             });
         };
-        let deliveryLongPressTimer;
+       let deliveryLongPressTimer;
+let deliveryToDelete = null;
 
-// 1. Unique timer for deliveries
+// 1. Start the timer when the user touches the screen
 window.startDeliveryLongPress = function(deliveryId) {
     deliveryLongPressTimer = setTimeout(function() {
         window.processDeliveryDeletion(deliveryId);
@@ -2219,28 +2248,41 @@ window.cancelDeliveryLongPress = function() {
     clearTimeout(deliveryLongPressTimer);
 };
 
-// 2. The Deletion and Math Logic
+// 2. Open the custom modal instead of browser alerts
 window.processDeliveryDeletion = function(deliveryId) {
-    const index = dealerDeliveries.findIndex(d => d.id === deliveryId);
+    deliveryToDelete = deliveryId;
+    
+    // Automatically check the box for safety by default
+    const checkbox = document.getElementById('revertStockCheckbox');
+    if (checkbox) checkbox.checked = true;
+    
+    // Show the premium modal
+    document.getElementById('deliveryDeleteModal').style.display = 'flex';
+};
+
+// 3. Cancel button logic
+window.closeDeliveryDeleteModal = function() {
+    document.getElementById('deliveryDeleteModal').style.display = 'none';
+    deliveryToDelete = null;
+};
+
+// 4. Confirm button logic and Stock Math
+window.confirmDeliveryDeleteAction = function() {
+    if (!deliveryToDelete) return;
+
+    const index = dealerDeliveries.findIndex(d => d.id === deliveryToDelete);
     if (index === -1) return;
     
     const entry = dealerDeliveries[index];
+    const wantToRevertStock = document.getElementById('revertStockCheckbox').checked;
 
-    const wantToDelete = confirm("🗑️ Are you sure you want to delete this delivery entry?");
-    if (!wantToDelete) return; 
-
-    // Dynamic message showing the exact width and qty!
-    const wantToRevertStock = confirm(`📦 STOCK ADJUSTMENT:\n\nShould we also SUBTRACT these ${entry.qty} items from your ${entry.width}ft stock?\n\n• Click 'OK' to DELETE log AND SUBTRACT stock.\n• Click 'Cancel' to DELETE log but KEEP stock.`);
-
-    if (wantToRevertStock) {
-        // ACTUAL STOCK MATH BASED ON YOUR ARRAYS
-        if (fullStock[entry.width] !== undefined) {
-            fullStock[entry.width] -= entry.qty;
-            
-            // Safety measure: don't let stock drop below 0
-            if (fullStock[entry.width] < 0) {
-                fullStock[entry.width] = 0;
-            }
+    // ACTUAL STOCK MATH 
+    if (wantToRevertStock && fullStock[entry.width] !== undefined) {
+        fullStock[entry.width] -= entry.qty;
+        
+        // Safety measure: don't let stock drop below 0
+        if (fullStock[entry.width] < 0) {
+            fullStock[entry.width] = 0;
         }
     }
 
@@ -2251,6 +2293,7 @@ window.processDeliveryDeletion = function(deliveryId) {
     window.saveToServer();
     
     showNotification("🗑️ Delivery entry deleted", false);
+    window.closeDeliveryDeleteModal();
 };
 </script>
     </body>
