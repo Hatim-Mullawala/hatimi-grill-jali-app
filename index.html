@@ -1162,14 +1162,28 @@
                 if (activeQueue.length === 0) {
                     queueContainer.innerHTML = '<p style="text-align:center; color:#94a3b8; font-weight:600; padding: 20px;">No pending orders for godown.</p>';
                 } else {
-                    const groupedOrders = {};
+                   const groupedOrders = {};
                     activeQueue.forEach(order => {
                         const custName = order.customer || 'Walk-in';
-                        if (!groupedOrders[custName]) groupedOrders[custName] = [];
-                        groupedOrders[custName].push(order);
+                        
+                        // 🚀 NEW: Extract just the Date (e.g., "28 Oct") to separate different days
+                        let datePart = 'Today';
+                        if (order.time && order.time.includes(',')) {
+                            datePart = order.time.split(',')[0].trim();
+                        }
+                        
+                        // Combine Name and Date into a unique key (e.g., "Shabbir___28 Oct")
+                        const groupKey = `${custName}___${datePart}`;
+                        
+                        if (!groupedOrders[groupKey]) groupedOrders[groupKey] = [];
+                        groupedOrders[groupKey].push(order);
                     });
 
-                    for (const [customerName, items] of Object.entries(groupedOrders)) {
+                    for (const [groupKey, items] of Object.entries(groupedOrders)) {
+                        // Split the key back apart so the UI displays just the Name
+                        const customerName = groupKey.split('___')[0];
+                        
+                        // Get the specific time for this specific day's batch
                         const orderTime = items[0].time || 'Recent Order';
 
                         let cardHTML = `
