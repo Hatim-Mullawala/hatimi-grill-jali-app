@@ -2027,7 +2027,13 @@ window.processGodownCut = async function(orderId) {
                 items.forEach((entry, idx) => {
                     const borderStr = idx === items.length - 1 ? '' : 'border-bottom: 1px solid #f1f5f9;';
                     finalHTML += `
-                            <tr style="${borderStr}">
+                            <tr style="${borderStr} cursor: pointer; user-select: none;"
+                                onmousedown="window.startDeliveryLongPress('${entry.id}')" 
+                                onmouseup="window.cancelDeliveryLongPress()" 
+                                onmouseleave="window.cancelDeliveryLongPress()" 
+                                ontouchstart="window.startDeliveryLongPress('${entry.id}')" 
+                                ontouchend="window.cancelDeliveryLongPress()" 
+                                ontouchmove="window.cancelDeliveryLongPress()">
                                 <td style="padding: 12px 15px; color: #475569; width: 60%;">
                                     <span style="font-weight: 800; color: var(--navy); font-size: 16px;">${entry.width} ft</span> <span style="font-size: 13px;">width sheets</span>
                                 </td>
@@ -2200,6 +2206,52 @@ window.enableNativeNotifications = async function() {
                 }
             });
         };
+        let deliveryLongPressTimer;
+
+// 1. Unique timer for deliveries
+window.startDeliveryLongPress = function(deliveryId) {
+    deliveryLongPressTimer = setTimeout(function() {
+        window.processDeliveryDeletion(deliveryId);
+    }, 800);
+};
+
+window.cancelDeliveryLongPress = function() {
+    clearTimeout(deliveryLongPressTimer);
+};
+
+// 2. The Deletion and Math Logic
+window.processDeliveryDeletion = function(deliveryId) {
+    const index = dealerDeliveries.findIndex(d => d.id === deliveryId);
+    if (index === -1) return;
+    
+    const entry = dealerDeliveries[index];
+
+    const wantToDelete = confirm("🗑️ Are you sure you want to delete this delivery entry?");
+    if (!wantToDelete) return; 
+
+    // Dynamic message showing the exact width and qty!
+    const wantToRevertStock = confirm(`📦 STOCK ADJUSTMENT:\n\nShould we also SUBTRACT these ${entry.qty} items from your ${entry.width}ft stock?\n\n• Click 'OK' to DELETE log AND SUBTRACT stock.\n• Click 'Cancel' to DELETE log but KEEP stock.`);
+
+    if (wantToRevertStock) {
+        // ACTUAL STOCK MATH BASED ON YOUR ARRAYS
+        if (fullStock[entry.width] !== undefined) {
+            fullStock[entry.width] -= entry.qty;
+            
+            // Safety measure: don't let stock drop below 0
+            if (fullStock[entry.width] < 0) {
+                fullStock[entry.width] = 0;
+            }
+        }
+    }
+
+    dealerDeliveries.splice(index, 1);
+
+    window.renderDeliveryLog();
+    window.renderUI();
+    window.saveToServer();
+    
+    showNotification("🗑️ Delivery entry deleted", false);
+};
 </script>
     </body>
     </html>
